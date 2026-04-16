@@ -7,7 +7,7 @@ type HealthResponse = {
   [key: string]: unknown;
 };
 
-const healthEndpoint = "/api/actuator/health";
+const healthEndpoint = "/core/actuator/health";
 
 function formatUpdatedAt() {
   return new Intl.DateTimeFormat("zh-CN", {
@@ -84,7 +84,7 @@ export default function Home() {
                 core 健康状态面板
               </h1>
               <p className="max-w-2xl text-base leading-8 text-slate-600 sm:text-lg">
-                页面会通过同源入口请求 <span className="font-mono text-slate-900">/api/actuator/health</span>，把 core 的 Actuator 结果直接展示出来，方便在 nginx、web 和 core 之间快速确认链路是否正常。
+                页面会通过同源入口请求 <span className="font-mono text-slate-900">/core/actuator/health</span>，把 core 的 Actuator 结果直接展示出来，方便在 nginx、web 和 core 之间快速确认链路是否正常。
               </p>
             </div>
 
@@ -167,7 +167,7 @@ export default function Home() {
               </div>
             ) : error ? (
               <p className="text-sm leading-7 text-rose-200">
-                无法读取 core 的健康检查结果。请确认 core 已启动，并且 nginx 已把 <span className="font-mono">/api/actuator/health</span> 正确转发到后端。
+                无法读取 core 的健康检查结果。请确认 core 已启动，并且 nginx 已把 <span className="font-mono">/core/actuator/health</span> 正确转发到后端。
               </p>
             ) : (
               <pre className="overflow-x-auto text-sm leading-7 text-slate-100">
