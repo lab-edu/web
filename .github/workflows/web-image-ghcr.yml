@@ -13,7 +13,6 @@ on:
       - tsconfig.json
       - postcss.config.mjs
       - eslint.config.mjs
-      - next-env.d.ts
       - Dockerfile
       - .github/workflows/web-image-ghcr.yml
   workflow_dispatch:

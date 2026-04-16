@@ -11,7 +11,7 @@ COPY --from=deps /app/node_modules ./node_modules
 COPY package.json package-lock.json ./
 COPY app/ app/
 COPY public/ public/
-COPY next.config.ts tsconfig.json postcss.config.mjs next-env.d.ts eslint.config.mjs ./
+COPY next.config.ts tsconfig.json postcss.config.mjs eslint.config.mjs ./
 
 RUN npm run build
 
