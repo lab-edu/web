@@ -3,7 +3,7 @@ name: web-image-ghcr
 on:
   push:
     branches:
-      - dev
+      - main
     paths:
       - app/**
       - public/**
