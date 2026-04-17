@@ -13,6 +13,12 @@ lab-edu 的前端应用，基于 Next.js（App Router）。
 ```text
 web/
 ├── app/                              # App Router 页面与全局样式
+│   ├── login/                        # 登录页
+│   ├── courses/                      # 课程列表/详情页
+│   └── experiments/                  # 实验详情与提交页
+├── lib/api/                          # 统一 API 调用封装
+├── lib/auth/                         # 全局登录态管理
+├── middleware.ts                     # 路由守卫
 ├── public/                           # 静态资源
 ├── Dockerfile                        # 生产镜像构建文件
 ├── .dockerignore                     # Docker 构建上下文过滤
@@ -55,6 +61,8 @@ docker build -t lab-edu-web-test .
 
 ## 联调约定
 
-- 页面访问后端健康检查使用：`/core/actuator/health`
-- 该路径由 `infra/nginx.conf` 转发到 core 服务的 `/actuator/health`
-- 不建议在前端直接拼接 core 容器地址或端口
+- 前端业务请求统一使用：`/core/api/v1/*`
+- 开发环境通过 `next.config.ts` rewrite 将 `/core/*` 转发到 `NEXT_PUBLIC_CORE_ORIGIN`（默认 `http://localhost:8080`）
+- 所有请求默认 `credentials: include`，由后端 `HttpOnly` Cookie 维持登录态
+- 登录态失效后，访问 `/courses`、`/experiments/*` 会自动跳回 `/login`
+- 不建议在页面组件里直接写 `fetch` 到后端地址，统一通过 `lib/api` 封装
