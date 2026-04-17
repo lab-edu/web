@@ -10,8 +10,9 @@ WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY package.json package-lock.json ./
 COPY app/ app/
+COPY lib/ lib/
 COPY public/ public/
-COPY next.config.ts tsconfig.json postcss.config.mjs eslint.config.mjs ./
+COPY proxy.ts next.config.ts tsconfig.json next-env.d.ts postcss.config.mjs eslint.config.mjs ./
 
 RUN npm run build
 
