@@ -3,9 +3,30 @@
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { FormEvent, useCallback, useEffect, useState } from "react";
+import {
+  BellOutlined,
+  CalendarOutlined,
+  NotificationOutlined,
+  TeamOutlined,
+} from "@ant-design/icons";
+import {
+  Alert,
+  Button,
+  Card,
+  Col,
+  Form,
+  Input,
+  List,
+  Row,
+  Space,
+  Spin,
+  Tag,
+  Typography,
+} from "antd";
 import { coursesApi } from "@/lib/api/courses";
 import { experimentsApi } from "@/lib/api/experiments";
 import type { CourseDetail } from "@/lib/api/types";
+import { PlatformShell } from "@/components/platform-shell";
 import { useAuth } from "@/lib/auth/auth-context";
 
 export default function CourseDetailPage() {
@@ -20,6 +41,21 @@ export default function CourseDetailPage() {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [dueAt, setDueAt] = useState("");
+
+  const announcements = [
+    {
+      id: "1",
+      title: "实验规范说明",
+      content: "提交命名请使用 学号_姓名_实验名，报告与代码请打包后上传。",
+      date: "今天 09:20",
+    },
+    {
+      id: "2",
+      title: "课堂节奏提醒",
+      content: "本周完成环境验收与实验一预习，下周课堂进行现场答疑。",
+      date: "昨天 16:30",
+    },
+  ];
 
   const loadCourse = useCallback(async () => {
     setBusy(true);
@@ -61,104 +97,129 @@ export default function CourseDetailPage() {
 
   if (loading || !user) {
     return (
-      <main className="page-wrap">
-        <p className="muted">正在同步登录状态...</p>
+      <main className="auth-page">
+        <Spin size="large" tip="正在同步登录状态..." />
       </main>
     );
   }
 
   return (
-    <main className="page-wrap space-y-5">
-      <section className="panel">
-        <div className="panel-inner flex flex-wrap items-center justify-between gap-3">
-          <div>
-            <Link className="muted text-sm underline" href="/courses">
-              返回课程列表
-            </Link>
-            <h1 className="mt-1 text-3xl font-bold">{course?.title || "课程详情"}</h1>
-            <p className="muted mt-2 text-sm">{course?.description || "暂无描述"}</p>
-          </div>
-          {course ? <span className="mono rounded-md bg-stone-100 px-2 py-1 text-xs">邀请码 {course.inviteCode}</span> : null}
-        </div>
-      </section>
+    <PlatformShell
+      title={course?.title || "课程详情"}
+      subtitle={course?.description || "统一管理成员、公告与实验。"}
+      actions={(
+        <Space>
+          <Button icon={<BellOutlined />} onClick={() => void loadCourse()}>
+            刷新
+          </Button>
+          <Link href="/courses">
+            <Button>返回课程列表</Button>
+          </Link>
+        </Space>
+      )}
+    >
+      {error ? <Alert style={{ marginBottom: 12 }} type="error" message={error} showIcon /> : null}
 
-      {error ? (
-        <section className="panel">
-          <p className="panel-inner text-sm text-red-700">{error}</p>
-        </section>
-      ) : null}
+      <Row gutter={[16, 16]}>
+        <Col xs={24} xl={17}>
+          <Card title="实验列表" extra={course ? <Tag color="blue">邀请码 {course.inviteCode}</Tag> : null}>
+            {busy ? (
+              <Spin />
+            ) : (
+              <List
+                itemLayout="horizontal"
+                dataSource={course?.experiments || []}
+                locale={{ emptyText: "暂无实验" }}
+                renderItem={(experiment) => (
+                  <List.Item
+                    actions={[
+                      <Link key={experiment.id} href={`/experiments/${experiment.id}?courseId=${courseId}`}>
+                        进入实验
+                      </Link>,
+                    ]}
+                  >
+                    <List.Item.Meta
+                      title={<Space><NotificationOutlined />{experiment.title}</Space>}
+                      description={
+                        <Space direction="vertical" size={0}>
+                          <Typography.Text type="secondary">{experiment.description || "暂无描述"}</Typography.Text>
+                          <Typography.Text type="secondary">
+                            <CalendarOutlined /> 截止：{experiment.dueAt ? new Date(experiment.dueAt).toLocaleString("zh-CN") : "未设置"}
+                          </Typography.Text>
+                        </Space>
+                      }
+                    />
+                  </List.Item>
+                )}
+              />
+            )}
+          </Card>
 
-      <section className="grid gap-4 md:grid-cols-2">
-        <article className="panel">
-          <div className="panel-inner space-y-3">
-            <h2 className="text-xl font-semibold">课程成员</h2>
-            {busy ? <p className="muted text-sm">加载中...</p> : null}
-            <ul className="space-y-2">
-              {course?.members.map((member) => (
-                <li key={member.user.id} className="rounded-lg border border-[var(--border)] bg-white/70 px-3 py-2 text-sm">
-                  <div className="flex items-center justify-between gap-2">
+          {user.role === "TEACHER" ? (
+            <Card title="发布实验" style={{ marginTop: 16 }}>
+              <Form layout="vertical" onSubmitCapture={onCreateExperiment}>
+                <Form.Item label="实验标题" required>
+                  <Input value={title} onChange={(event) => setTitle(event.target.value)} required />
+                </Form.Item>
+                <Form.Item label="实验描述">
+                  <Input.TextArea value={description} rows={4} onChange={(event) => setDescription(event.target.value)} />
+                </Form.Item>
+                <Row gutter={12}>
+                  <Col xs={24} md={14}>
+                    <Form.Item label="截止时间">
+                      <Input type="datetime-local" value={dueAt} onChange={(event) => setDueAt(event.target.value)} />
+                    </Form.Item>
+                  </Col>
+                  <Col xs={24} md={10}>
+                    <Form.Item label=" " colon={false}>
+                      <Button type="primary" htmlType="submit" block>
+                        发布实验
+                      </Button>
+                    </Form.Item>
+                  </Col>
+                </Row>
+              </Form>
+            </Card>
+          ) : null}
+        </Col>
+
+        <Col xs={24} xl={7}>
+          <Card title="课堂公告" extra={<Tag color="gold">{announcements.length}</Tag>}>
+            <List
+              dataSource={announcements}
+              renderItem={(item) => (
+                <List.Item>
+                  <List.Item.Meta
+                    title={item.title}
+                    description={
+                      <Space direction="vertical" size={0}>
+                        <Typography.Text type="secondary">{item.content}</Typography.Text>
+                        <Typography.Text type="secondary">{item.date}</Typography.Text>
+                      </Space>
+                    }
+                  />
+                </List.Item>
+              )}
+            />
+          </Card>
+
+          <Card title="课程成员" style={{ marginTop: 16 }}>
+            <List
+              dataSource={course?.members || []}
+              locale={{ emptyText: "暂无成员" }}
+              renderItem={(member) => (
+                <List.Item>
+                  <Space>
+                    <TeamOutlined />
                     <span>{member.user.displayName || member.user.username}</span>
-                    <span className="mono text-xs text-teal-700">{member.memberRole}</span>
-                  </div>
-                </li>
-              ))}
-            </ul>
-          </div>
-        </article>
-
-        <article className="panel">
-          <div className="panel-inner space-y-3">
-            <h2 className="text-xl font-semibold">实验列表</h2>
-            <ul className="space-y-2">
-              {course?.experiments.map((experiment) => (
-                <li key={experiment.id} className="rounded-lg border border-[var(--border)] bg-white/70 px-3 py-2">
-                  <div className="flex items-start justify-between gap-2">
-                    <div>
-                      <p className="font-semibold">{experiment.title}</p>
-                      <p className="muted text-xs">截止：{experiment.dueAt ? new Date(experiment.dueAt).toLocaleString("zh-CN") : "未设置"}</p>
-                    </div>
-                    <Link className="btn btn-primary" href={`/experiments/${experiment.id}?courseId=${courseId}`}>
-                      查看
-                    </Link>
-                  </div>
-                </li>
-              ))}
-            </ul>
-          </div>
-        </article>
-      </section>
-
-      {user.role === "TEACHER" ? (
-        <section className="panel">
-          <form className="panel-inner grid gap-3 md:grid-cols-2" onSubmit={onCreateExperiment}>
-            <div className="space-y-2 md:col-span-2">
-              <h2 className="text-xl font-semibold">发布实验</h2>
-            </div>
-            <input
-              className="field md:col-span-2"
-              placeholder="实验标题"
-              value={title}
-              onChange={(event) => setTitle(event.target.value)}
-              required
+                    <Tag>{member.memberRole}</Tag>
+                  </Space>
+                </List.Item>
+              )}
             />
-            <textarea
-              className="field md:col-span-2 min-h-24"
-              placeholder="实验描述"
-              value={description}
-              onChange={(event) => setDescription(event.target.value)}
-            />
-            <input
-              className="field"
-              type="datetime-local"
-              value={dueAt}
-              onChange={(event) => setDueAt(event.target.value)}
-            />
-            <button className="btn btn-primary" type="submit">
-              发布实验
-            </button>
-          </form>
-        </section>
-      ) : null}
-    </main>
+          </Card>
+        </Col>
+      </Row>
+    </PlatformShell>
   );
 }

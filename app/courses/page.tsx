@@ -2,15 +2,40 @@
 
 import Link from "next/link";
 import { FormEvent, useEffect, useMemo, useState } from "react";
+import {
+  BookOutlined,
+  PlusCircleOutlined,
+  TeamOutlined,
+  UserAddOutlined,
+} from "@ant-design/icons";
+import {
+  Alert,
+  Button,
+  Card,
+  Col,
+  Empty,
+  Form,
+  Input,
+  Modal,
+  Row,
+  Space,
+  Spin,
+  Statistic,
+  Tag,
+  Typography,
+} from "antd";
 import { coursesApi } from "@/lib/api/courses";
 import type { CourseSummary } from "@/lib/api/types";
+import { PlatformShell } from "@/components/platform-shell";
 import { useAuth } from "@/lib/auth/auth-context";
 
 export default function CoursesPage() {
-  const { user, loading, logout } = useAuth();
+  const { user, loading } = useAuth();
   const [courses, setCourses] = useState<CourseSummary[]>([]);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [showJoinModal, setShowJoinModal] = useState(false);
 
   const [createTitle, setCreateTitle] = useState("");
   const [createDescription, setCreateDescription] = useState("");
@@ -51,6 +76,7 @@ export default function CoursesPage() {
       await coursesApi.create({ title: createTitle, description: createDescription });
       setCreateTitle("");
       setCreateDescription("");
+      setShowCreateModal(false);
       await loadCourses();
     } catch (createError) {
       setError(createError instanceof Error ? createError.message : "创建课程失败");
@@ -63,130 +89,134 @@ export default function CoursesPage() {
     try {
       await coursesApi.join(inviteCode.trim());
       setInviteCode("");
+      setShowJoinModal(false);
       await loadCourses();
     } catch (joinError) {
       setError(joinError instanceof Error ? joinError.message : "加入课程失败");
     }
   };
 
-  const onLogout = async () => {
-    await logout();
-    window.location.href = "/login";
-  };
-
   if (loading || !user) {
     return (
-      <main className="page-wrap">
-        <p className="muted">正在同步登录状态...</p>
+      <main className="auth-page">
+        <Spin size="large" tip="正在同步登录状态..." />
       </main>
     );
   }
 
   return (
-    <main className="page-wrap space-y-5">
-      <section className="panel">
-        <div className="panel-inner flex flex-wrap items-center justify-between gap-4">
-          <div>
-            <p className="mono text-xs font-bold uppercase tracking-[0.24em] text-teal-700">dashboard</p>
-            <h1 className="mt-1 text-3xl font-bold">{heading}</h1>
-            <p className="muted mt-2 text-sm">
-              当前用户：{user.displayName || user.username}（{user.role}）
-            </p>
-          </div>
-          <button className="btn btn-secondary" type="button" onClick={onLogout}>
-            退出登录
-          </button>
-        </div>
-      </section>
-
-      <section className="grid gap-4 md:grid-cols-2">
-        {isTeacher ? (
-          <article className="panel">
-            <form className="panel-inner space-y-3" onSubmit={onCreateCourse}>
-              <h2 className="text-xl font-semibold">创建课程</h2>
-              <input
-                className="field"
-                placeholder="课程名称"
-                value={createTitle}
-                onChange={(event) => setCreateTitle(event.target.value)}
-                required
-              />
-              <textarea
-                className="field min-h-24"
-                placeholder="课程描述（可选）"
-                value={createDescription}
-                onChange={(event) => setCreateDescription(event.target.value)}
-              />
-              <button className="btn btn-primary" type="submit">
-                发布课程
-              </button>
-            </form>
-          </article>
-        ) : (
-          <article className="panel">
-            <form className="panel-inner space-y-3" onSubmit={onJoinCourse}>
-              <h2 className="text-xl font-semibold">加入课程</h2>
-              <input
-                className="field mono"
-                placeholder="输入邀请码"
-                value={inviteCode}
-                onChange={(event) => setInviteCode(event.target.value)}
-                required
-              />
-              <button className="btn btn-primary" type="submit">
-                加入
-              </button>
-            </form>
-          </article>
-        )}
-
-        <article className="panel">
-          <div className="panel-inner space-y-2">
-            <h2 className="text-xl font-semibold">联调说明</h2>
-            <p className="muted text-sm">页面调用统一使用 services 层封装，自动附带 Cookie，并统一处理后端 code/message/data 响应结构。</p>
-            <p className="muted text-sm">登录态失效后访问课程页会被中间件重定向到 /login。</p>
-          </div>
-        </article>
-      </section>
-
-      <section className="panel">
-        <div className="panel-inner space-y-3">
-          <div className="flex items-center justify-between">
-            <h2 className="text-xl font-semibold">课程列表</h2>
-            <button className="btn btn-secondary" type="button" onClick={() => void loadCourses()}>
-              刷新
-            </button>
-          </div>
-
-          {busy ? <p className="muted text-sm">加载中...</p> : null}
-          {error ? <p className="text-sm text-red-700">{error}</p> : null}
-
-          {!busy && courses.length === 0 ? (
-            <p className="muted text-sm">当前暂无课程。</p>
+    <PlatformShell
+      title={heading}
+      subtitle="课程、实验、公告与提交都在同一工作台内完成。"
+      actions={(
+        <Space>
+          <Button icon={<BookOutlined />} onClick={() => void loadCourses()}>
+            刷新
+          </Button>
+          {isTeacher ? (
+            <Button type="primary" icon={<PlusCircleOutlined />} onClick={() => setShowCreateModal(true)}>
+              创建课程
+            </Button>
           ) : (
-            <ul className="grid gap-3">
-              {courses.map((course) => (
-                <li key={course.id} className="rounded-xl border border-[var(--border)] bg-white/80 p-4">
-                  <div className="flex flex-wrap items-start justify-between gap-3">
-                    <div>
-                      <h3 className="text-lg font-semibold">{course.title}</h3>
-                      <p className="muted mt-1 text-sm">{course.description || "暂无描述"}</p>
-                    </div>
-                    <Link className="btn btn-primary" href={`/courses/${course.id}`}>
-                      进入课程
-                    </Link>
-                  </div>
-                  <div className="mt-3 flex flex-wrap gap-3 text-xs">
-                    <span className="rounded-md bg-stone-100 px-2 py-1">成员 {course.memberCount}</span>
-                    <span className="rounded-md bg-stone-100 px-2 py-1 mono">邀请码 {course.inviteCode}</span>
-                    <span className="rounded-md bg-stone-100 px-2 py-1">教师 {course.ownerUsername}</span>
-                  </div>
-                </li>
-              ))}
-            </ul>
+            <Button type="primary" icon={<UserAddOutlined />} onClick={() => setShowJoinModal(true)}>
+              加入课程
+            </Button>
           )}
-        </div>
-      </section>
-    </main>
+        </Space>
+      )}
+    >
+      <Row gutter={[16, 16]}>
+        <Col xs={24} md={8}>
+          <Card>
+            <Statistic title="我的课程" value={courses.length} prefix={<BookOutlined />} />
+          </Card>
+        </Col>
+        <Col xs={24} md={8}>
+          <Card>
+            <Statistic title="角色" value={isTeacher ? "教师" : "学生"} />
+          </Card>
+        </Col>
+        <Col xs={24} md={8}>
+          <Card>
+            <Statistic title="累计成员" value={courses.reduce((acc, item) => acc + item.memberCount, 0)} prefix={<TeamOutlined />} />
+          </Card>
+        </Col>
+      </Row>
+
+      <Card title="课程列表" style={{ marginTop: 16 }}>
+        {error ? <Alert style={{ marginBottom: 12 }} type="error" message={error} showIcon /> : null}
+
+        {busy ? (
+          <Spin />
+        ) : courses.length === 0 ? (
+          <Empty description="当前暂无课程" />
+        ) : (
+          <Row gutter={[16, 16]}>
+            {courses.map((course) => (
+              <Col xs={24} md={12} xl={8} key={course.id}>
+                <Card
+                  hoverable
+                  title={course.title}
+                  extra={<Tag color="blue">成员 {course.memberCount}</Tag>}
+                  actions={[
+                    <Link key="enter" href={`/courses/${course.id}`}>
+                      进入课程
+                    </Link>,
+                  ]}
+                >
+                  <Typography.Paragraph type="secondary" ellipsis={{ rows: 2 }}>
+                    {course.description || "暂无描述"}
+                  </Typography.Paragraph>
+                  <Space direction="vertical" size={4}>
+                    <Typography.Text type="secondary">教师：{course.ownerUsername}</Typography.Text>
+                    <Typography.Text className="mono">邀请码：{course.inviteCode}</Typography.Text>
+                  </Space>
+                </Card>
+              </Col>
+            ))}
+          </Row>
+        )}
+      </Card>
+
+      <Modal
+        title="创建课程"
+        open={showCreateModal}
+        onCancel={() => setShowCreateModal(false)}
+        onOk={() => {
+          const form = document.getElementById("create-course-form") as HTMLFormElement | null;
+          form?.requestSubmit();
+        }}
+        okText="创建"
+        cancelText="取消"
+        okButtonProps={{ disabled: !isTeacher }}
+      >
+        <Form id="create-course-form" layout="vertical" onSubmitCapture={onCreateCourse}>
+          <Form.Item label="课程名称" required>
+            <Input value={createTitle} onChange={(event) => setCreateTitle(event.target.value)} required />
+          </Form.Item>
+          <Form.Item label="课程描述">
+            <Input.TextArea value={createDescription} rows={4} onChange={(event) => setCreateDescription(event.target.value)} />
+          </Form.Item>
+        </Form>
+      </Modal>
+
+      <Modal
+        title="加入课程"
+        open={showJoinModal}
+        onCancel={() => setShowJoinModal(false)}
+        onOk={() => {
+          const form = document.getElementById("join-course-form") as HTMLFormElement | null;
+          form?.requestSubmit();
+        }}
+        okText="加入"
+        cancelText="取消"
+      >
+        <Form id="join-course-form" layout="vertical" onSubmitCapture={onJoinCourse}>
+          <Form.Item label="邀请码" required>
+            <Input value={inviteCode} onChange={(event) => setInviteCode(event.target.value)} placeholder="请输入邀请码" required />
+          </Form.Item>
+        </Form>
+      </Modal>
+    </PlatformShell>
   );
 }
