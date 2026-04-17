@@ -19,6 +19,14 @@ export type AuthLoginPayload = {
   password: string;
 };
 
+export type AuthRegisterPayload = {
+  username: string;
+  email: string;
+  password: string;
+  displayName?: string;
+  role: UserRole;
+};
+
 export type AuthLoginData = {
   user: UserSummary;
   tokenType: string;
@@ -26,6 +34,10 @@ export type AuthLoginData = {
 };
 
 export type AuthMeData = {
+  user: UserSummary;
+};
+
+export type AuthRegisterData = {
   user: UserSummary;
 };
 

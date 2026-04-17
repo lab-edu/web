@@ -6,6 +6,8 @@ import { FormEvent, useEffect, useState } from "react";
 import { ApiError } from "@/lib/api/client";
 import { useAuth } from "@/lib/auth/auth-context";
 
+const coreDocsUrl = process.env.NEXT_PUBLIC_CORE_DOCS_URL ?? "http://localhost:8080/swagger-ui.html";
+
 export default function LoginPage() {
   const router = useRouter();
   const { user, loading, login } = useAuth();
@@ -90,9 +92,17 @@ export default function LoginPage() {
             当前 MVP 通过后端 HttpOnly Cookie 维持登录态，刷新页面后会自动恢复。
           </p>
           <p className="muted text-xs">
+            还没有账号？
+            {" "}
+            <Link className="text-teal-700 underline" href="/register">
+              去注册
+            </Link>
+            。
+          </p>
+          <p className="muted text-xs">
             API 文档见
             {" "}
-            <Link className="text-teal-700 underline" href="/core/swagger-ui.html" target="_blank">
+            <Link className="text-teal-700 underline" href={coreDocsUrl} target="_blank">
               Swagger UI
             </Link>
             。

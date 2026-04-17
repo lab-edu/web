@@ -11,7 +11,7 @@ export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const hasToken = Boolean(request.cookies.get(authCookieName)?.value);
 
-  if (pathname === "/login" && hasToken) {
+  if ((pathname === "/login" || pathname === "/register") && hasToken) {
     return NextResponse.redirect(new URL("/courses", request.url));
   }
 
@@ -23,5 +23,5 @@ export function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/login", "/courses/:path*", "/experiments/:path*"],
+  matcher: ["/login", "/register", "/courses/:path*", "/experiments/:path*"],
 };
