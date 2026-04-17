@@ -62,14 +62,13 @@ docker build -t lab-edu-web-test .
 
 ## 环境变量
 
-- `NEXT_PUBLIC_API_BASE_URL`：前端请求 core API 的基地址（例如 `http://core.lab-edu.team/api/v1`）
-- `NEXT_PUBLIC_CORE_DOCS_URL`：登录页展示的 Swagger 链接（例如 `http://core.lab-edu.team/swagger-ui.html`）
+- `NEXT_PUBLIC_CORE_BASE_URL`：core 服务的基地址（例如 `http://localhost:8080`）
+- 前端会自动拼接 `.../api/v1` 与 `.../swagger-ui.html`
 
 ## 联调约定
 
-- 前端业务请求统一通过 `lib/api/client.ts` 发送，默认使用：`NEXT_PUBLIC_API_BASE_URL`
-- 本地直连 core 可设置：`NEXT_PUBLIC_API_BASE_URL=http://localhost:8080/api/v1`
-- 生产推荐域名分流：`lab-edu.team`（web）与 `core.lab-edu.team`（core）
+- 前端业务请求统一通过 `lib/api/client.ts` 发送，默认使用：`NEXT_PUBLIC_CORE_BASE_URL`
+- 本地直连 core 可设置：`NEXT_PUBLIC_CORE_BASE_URL=http://localhost:8080`
 - 所有请求默认 `credentials: include`，由后端 `HttpOnly` Cookie 维持登录态
 - 登录态失效后，访问 `/courses`、`/experiments/*` 会自动跳回 `/login`
 - `/register` 为公开页面，支持学生/教师账号创建

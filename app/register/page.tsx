@@ -3,6 +3,8 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { FormEvent, useEffect, useState } from "react";
+import { TeamOutlined } from "@ant-design/icons";
+import { Alert, Button, Card, Col, Form, Input, Row, Select, Space, Typography } from "antd";
 import { authApi } from "@/lib/api/auth";
 import { ApiError } from "@/lib/api/client";
 import { useAuth } from "@/lib/auth/auth-context";
@@ -57,108 +59,72 @@ export default function RegisterPage() {
   };
 
   return (
-    <main className="page-wrap flex min-h-screen items-center justify-center">
-      <section className="panel w-full max-w-md">
-        <div className="panel-inner space-y-6 p-8">
-          <div className="space-y-2">
-            <p className="mono text-xs font-bold uppercase tracking-[0.24em] text-teal-700">lab-edu</p>
-            <h1 className="text-3xl font-bold text-[var(--ink)]">注册账号</h1>
-            <p className="muted text-sm">创建账号后即可进入课程与实验平台。</p>
-          </div>
-
-          <form className="space-y-4" onSubmit={onSubmit}>
-            <div className="space-y-1">
-              <label className="text-sm font-medium" htmlFor="username">
-                用户名
-              </label>
-              <input
-                id="username"
-                className="field"
-                value={username}
-                onChange={(event) => setUsername(event.target.value)}
-                autoComplete="username"
-                minLength={3}
-                required
-              />
+    <main className="auth-page">
+      <Card className="auth-card" bordered={false} bodyStyle={{ padding: 0 }}>
+        <Row>
+          <Col xs={24} lg={10}>
+            <div className="auth-hero">
+              <Space direction="vertical" size={18}>
+                <Typography.Text style={{ color: "rgba(255,255,255,0.8)" }} className="mono">
+                  CREATE ACCOUNT
+                </Typography.Text>
+                <Typography.Title level={2} style={{ color: "#fff", margin: 0 }}>
+                  加入课堂空间
+                </Typography.Title>
+                <Typography.Paragraph style={{ color: "rgba(255,255,255,0.86)", margin: 0 }}>
+                  选择教师或学生角色，完成账号创建后即可参与课程、实验与公告协作。
+                </Typography.Paragraph>
+                <Typography.Text style={{ color: "#fff" }}>
+                  <TeamOutlined /> 双角色支持：教师 / 学生
+                </Typography.Text>
+              </Space>
             </div>
+          </Col>
 
-            <div className="space-y-1">
-              <label className="text-sm font-medium" htmlFor="displayName">
-                显示名（可选）
-              </label>
-              <input
-                id="displayName"
-                className="field"
-                value={displayName}
-                onChange={(event) => setDisplayName(event.target.value)}
-                autoComplete="nickname"
-              />
+          <Col xs={24} lg={14}>
+            <div style={{ padding: 32 }}>
+              <Typography.Title level={3}>注册账号</Typography.Title>
+              <Typography.Paragraph type="secondary">填写基础资料后即可开始使用平台。</Typography.Paragraph>
+
+              <Form layout="vertical" onSubmitCapture={onSubmit}>
+                <Form.Item label="用户名" required>
+                  <Input value={username} onChange={(event) => setUsername(event.target.value)} minLength={3} required />
+                </Form.Item>
+                <Form.Item label="显示名">
+                  <Input value={displayName} onChange={(event) => setDisplayName(event.target.value)} />
+                </Form.Item>
+                <Form.Item label="邮箱" required>
+                  <Input type="email" value={email} onChange={(event) => setEmail(event.target.value)} required />
+                </Form.Item>
+                <Form.Item label="密码" required>
+                  <Input.Password value={password} onChange={(event) => setPassword(event.target.value)} minLength={8} required />
+                </Form.Item>
+                <Form.Item label="身份" required>
+                  <Select
+                    value={role}
+                    onChange={(value) => setRole(value as UserRole)}
+                    options={[
+                      { value: "STUDENT", label: "学生" },
+                      { value: "TEACHER", label: "教师" },
+                    ]}
+                  />
+                </Form.Item>
+
+                {error ? <Alert style={{ marginBottom: 16 }} type="error" message={error} showIcon /> : null}
+                {success ? <Alert style={{ marginBottom: 16 }} type="success" message={success} showIcon /> : null}
+
+                <Button block type="primary" htmlType="submit" loading={submitting}>
+                  注册
+                </Button>
+              </Form>
+
+              <Typography.Text type="secondary" style={{ display: "block", marginTop: 16 }}>
+                已有账号？<Link href="/login">返回登录</Link>
+              </Typography.Text>
             </div>
-
-            <div className="space-y-1">
-              <label className="text-sm font-medium" htmlFor="email">
-                邮箱
-              </label>
-              <input
-                id="email"
-                className="field"
-                type="email"
-                value={email}
-                onChange={(event) => setEmail(event.target.value)}
-                autoComplete="email"
-                required
-              />
-            </div>
-
-            <div className="space-y-1">
-              <label className="text-sm font-medium" htmlFor="password">
-                密码
-              </label>
-              <input
-                id="password"
-                className="field"
-                type="password"
-                value={password}
-                onChange={(event) => setPassword(event.target.value)}
-                autoComplete="new-password"
-                minLength={8}
-                required
-              />
-            </div>
-
-            <div className="space-y-1">
-              <label className="text-sm font-medium" htmlFor="role">
-                身份
-              </label>
-              <select
-                id="role"
-                className="field"
-                value={role}
-                onChange={(event) => setRole(event.target.value as UserRole)}
-              >
-                <option value="STUDENT">学生</option>
-                <option value="TEACHER">教师</option>
-              </select>
-            </div>
-
-            {error ? <p className="text-sm text-red-700">{error}</p> : null}
-            {success ? <p className="text-sm text-green-700">{success}</p> : null}
-
-            <button className="btn btn-primary w-full" type="submit" disabled={submitting}>
-              {submitting ? "注册中..." : "注册"}
-            </button>
-          </form>
-
-          <p className="muted text-xs">
-            已有账号？
-            {" "}
-            <Link className="text-teal-700 underline" href="/login">
-              去登录
-            </Link>
-            。
-          </p>
-        </div>
-      </section>
+          </Col>
+        </Row>
+      </Card>
     </main>
   );
 }
