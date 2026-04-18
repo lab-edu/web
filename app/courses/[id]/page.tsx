@@ -6,6 +6,7 @@ import { FormEvent, useCallback, useEffect, useState } from "react";
 import {
   BellOutlined,
   CalendarOutlined,
+  FileOutlined,
   NotificationOutlined,
   TeamOutlined,
 } from "@ant-design/icons";
@@ -14,9 +15,11 @@ import {
   Button,
   Card,
   Col,
+  Divider,
   Form,
   Input,
   List,
+  Select,
   Row,
   Space,
   Spin,
@@ -25,7 +28,9 @@ import {
 } from "antd";
 import { coursesApi } from "@/lib/api/courses";
 import { experimentsApi } from "@/lib/api/experiments";
-import type { CourseDetail } from "@/lib/api/types";
+import { resourcesApi } from "@/lib/api/resources";
+import { gradesApi } from "@/lib/api/grades";
+import type { CourseDetail, CourseGradeOverview, CourseResource, ResourceType } from "@/lib/api/types";
 import { PlatformShell } from "@/components/platform-shell";
 import { useAuth } from "@/lib/auth/auth-context";
 
@@ -35,12 +40,20 @@ export default function CourseDetailPage() {
   const { user, loading } = useAuth();
 
   const [course, setCourse] = useState<CourseDetail | null>(null);
+  const [resources, setResources] = useState<CourseResource[]>([]);
+  const [gradeOverview, setGradeOverview] = useState<CourseGradeOverview | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [dueAt, setDueAt] = useState("");
+  const [resourceName, setResourceName] = useState("");
+  const [resourceType, setResourceType] = useState<ResourceType>("FILE");
+  const [resourceCategory, setResourceCategory] = useState("");
+  const [resourceExternalUrl, setResourceExternalUrl] = useState("");
+  const [resourceFile, setResourceFile] = useState<File | null>(null);
+  const [resourceSubmitting, setResourceSubmitting] = useState(false);
 
   const announcements = [
     {
@@ -61,15 +74,23 @@ export default function CourseDetailPage() {
     setBusy(true);
     setError(null);
     try {
-      const detail = await coursesApi.detail(courseId);
+      const [detail, resourceData, overview] = await Promise.all([
+        coursesApi.detail(courseId),
+        resourcesApi.list(courseId),
+        user?.role === "TEACHER" ? gradesApi.overview(courseId) : Promise.resolve(null),
+      ]);
       setCourse(detail);
+      setResources(resourceData.items);
+      setGradeOverview(overview);
     } catch (loadError) {
       setError(loadError instanceof Error ? loadError.message : "加载课程详情失败");
       setCourse(null);
+      setResources([]);
+      setGradeOverview(null);
     } finally {
       setBusy(false);
     }
-  }, [courseId]);
+  }, [courseId, user?.role]);
 
   useEffect(() => {
     if (!loading && user) {
@@ -92,6 +113,31 @@ export default function CourseDetailPage() {
       await loadCourse();
     } catch (createError) {
       setError(createError instanceof Error ? createError.message : "发布实验失败");
+    }
+  };
+
+  const onCreateResource = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    setError(null);
+    setResourceSubmitting(true);
+    try {
+      await resourcesApi.create(courseId, {
+        name: resourceName,
+        type: resourceType,
+        category: resourceCategory || undefined,
+        externalUrl: resourceType === "FILE" ? undefined : resourceExternalUrl,
+        file: resourceType === "FILE" ? (resourceFile ?? undefined) : undefined,
+      });
+      setResourceName("");
+      setResourceCategory("");
+      setResourceExternalUrl("");
+      setResourceFile(null);
+      setResourceType("FILE");
+      await loadCourse();
+    } catch (createError) {
+      setError(createError instanceof Error ? createError.message : "上传资源失败");
+    } finally {
+      setResourceSubmitting(false);
     }
   };
 
@@ -155,6 +201,59 @@ export default function CourseDetailPage() {
             )}
           </Card>
 
+          <Card title="课程资源" style={{ marginTop: 16 }}>
+            {busy ? (
+              <Spin />
+            ) : (
+              <List
+                itemLayout="horizontal"
+                dataSource={resources}
+                locale={{ emptyText: "暂无课程资源" }}
+                renderItem={(resource) => (
+                  <List.Item
+                    actions={[
+                      resource.type === "FILE" ? (
+                        <a
+                          key={resource.id}
+                          href={resourcesApi.buildFileUrl(resource.id)}
+                          target="_blank"
+                          rel="noreferrer"
+                        >
+                          下载
+                        </a>
+                      ) : (
+                        <a key={resource.id} href={resource.externalUrl ?? "#"} target="_blank" rel="noreferrer">
+                          打开链接
+                        </a>
+                      ),
+                    ]}
+                  >
+                    <List.Item.Meta
+                      title={
+                        <Space>
+                          <FileOutlined />
+                          <span>{resource.name}</span>
+                          <Tag>{resource.type}</Tag>
+                          {resource.category ? <Tag color="cyan">{resource.category}</Tag> : null}
+                        </Space>
+                      }
+                      description={
+                        <Space direction="vertical" size={0}>
+                          <Typography.Text type="secondary">
+                            上传者：{resource.uploadedBy.displayName || resource.uploadedBy.username}
+                          </Typography.Text>
+                          <Typography.Text type="secondary">
+                            上传时间：{new Date(resource.uploadedAt).toLocaleString("zh-CN")}
+                          </Typography.Text>
+                        </Space>
+                      }
+                    />
+                  </List.Item>
+                )}
+              />
+            )}
+          </Card>
+
           {user.role === "TEACHER" ? (
             <Card title="发布实验" style={{ marginTop: 16 }}>
               <Form layout="vertical" onSubmitCapture={onCreateExperiment}>
@@ -178,6 +277,48 @@ export default function CourseDetailPage() {
                     </Form.Item>
                   </Col>
                 </Row>
+              </Form>
+            </Card>
+          ) : null}
+
+          {user.role === "TEACHER" ? (
+            <Card title="上传课程资源" style={{ marginTop: 16 }}>
+              <Form layout="vertical" onSubmitCapture={onCreateResource}>
+                <Form.Item label="资源名称" required>
+                  <Input value={resourceName} onChange={(event) => setResourceName(event.target.value)} required />
+                </Form.Item>
+                <Row gutter={12}>
+                  <Col xs={24} md={12}>
+                    <Form.Item label="资源类型" required>
+                      <Select
+                        value={resourceType}
+                        options={[
+                          { label: "文件", value: "FILE" },
+                          { label: "视频链接", value: "VIDEO" },
+                          { label: "参考链接", value: "LINK" },
+                        ]}
+                        onChange={(value) => setResourceType(value)}
+                      />
+                    </Form.Item>
+                  </Col>
+                  <Col xs={24} md={12}>
+                    <Form.Item label="分类">
+                      <Input value={resourceCategory} onChange={(event) => setResourceCategory(event.target.value)} placeholder="如：课件/视频/参考资料" />
+                    </Form.Item>
+                  </Col>
+                </Row>
+                {resourceType === "FILE" ? (
+                  <Form.Item label="上传文件" required>
+                    <Input type="file" onChange={(event) => setResourceFile(event.target.files?.[0] ?? null)} required />
+                  </Form.Item>
+                ) : (
+                  <Form.Item label="外部链接" required>
+                    <Input value={resourceExternalUrl} onChange={(event) => setResourceExternalUrl(event.target.value)} placeholder="https://" required />
+                  </Form.Item>
+                )}
+                <Button type="primary" htmlType="submit" loading={resourceSubmitting}>
+                  上传资源
+                </Button>
               </Form>
             </Card>
           ) : null}
@@ -218,6 +359,39 @@ export default function CourseDetailPage() {
               )}
             />
           </Card>
+
+          {user.role === "TEACHER" ? (
+            <Card title="成绩汇总" style={{ marginTop: 16 }}>
+              <List
+                dataSource={gradeOverview?.students || []}
+                locale={{ emptyText: "暂无成绩数据" }}
+                renderItem={(item) => (
+                  <List.Item>
+                    <Space direction="vertical" size={0} style={{ width: "100%" }}>
+                      <Space>
+                        <Typography.Text strong>{item.student.displayName || item.student.username}</Typography.Text>
+                        <Tag color="blue">已提交 {item.submissionCount}</Tag>
+                        <Tag color={item.gradedCount > 0 ? "green" : "default"}>已评分 {item.gradedCount}</Tag>
+                        <Tag>均分 {item.averageScore ?? "-"}</Tag>
+                      </Space>
+                      {item.experiments.length > 0 ? (
+                        <>
+                          <Divider style={{ margin: "8px 0" }} />
+                          {item.experiments.map((experiment) => (
+                            <Typography.Text key={experiment.submissionId} type="secondary">
+                              {experiment.experimentTitle}：{experiment.score ?? "待评分"}
+                            </Typography.Text>
+                          ))}
+                        </>
+                      ) : (
+                        <Typography.Text type="secondary">暂无提交</Typography.Text>
+                      )}
+                    </Space>
+                  </List.Item>
+                )}
+              />
+            </Card>
+          ) : null}
         </Col>
       </Row>
     </PlatformShell>

@@ -20,4 +20,10 @@ export const submissionsApi = {
       body: formData,
     });
   },
+  grade(submissionId: string, payload: { score: number; feedback?: string }) {
+    return apiRequest<SubmissionDetail>(`/submissions/${submissionId}/grade`, {
+      method: "PATCH",
+      body: JSON.stringify(payload),
+    });
+  },
 };

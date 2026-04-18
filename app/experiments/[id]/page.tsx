@@ -15,6 +15,7 @@ import {
   Empty,
   Form,
   Input,
+  InputNumber,
   List,
   Space,
   Spin,
@@ -43,6 +44,7 @@ export default function ExperimentDetailPage() {
   const [note, setNote] = useState("");
   const [file, setFile] = useState<File | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [gradeDrafts, setGradeDrafts] = useState<Record<string, { score?: number; feedback?: string; loading?: boolean }>>({});
 
   const loadData = useCallback(async () => {
     if (!courseId) {
@@ -95,6 +97,35 @@ export default function ExperimentDetailPage() {
       setError(submitError instanceof Error ? submitError.message : "提交失败");
     } finally {
       setSubmitting(false);
+    }
+  };
+
+  const onGrade = async (submission: SubmissionDetail) => {
+    const draft = gradeDrafts[submission.id] ?? {};
+    if (draft.score === undefined || Number.isNaN(draft.score)) {
+      setError("请先填写评分分数");
+      return;
+    }
+
+    setError(null);
+    setGradeDrafts((current) => ({
+      ...current,
+      [submission.id]: { ...draft, loading: true },
+    }));
+
+    try {
+      await submissionsApi.grade(submission.id, {
+        score: draft.score,
+        feedback: draft.feedback,
+      });
+      await loadData();
+    } catch (gradeError) {
+      setError(gradeError instanceof Error ? gradeError.message : "评分失败");
+    } finally {
+      setGradeDrafts((current) => ({
+        ...current,
+        [submission.id]: { ...current[submission.id], loading: false },
+      }));
     }
   };
 
@@ -163,7 +194,7 @@ export default function ExperimentDetailPage() {
                   <Space wrap>
                     <Typography.Text strong>{submission.fileName}</Typography.Text>
                     {submission.latest ? <Tag color="green">最新提交</Tag> : null}
-                    {submission.score !== null ? <Tag>评分 {submission.score}</Tag> : null}
+                    {submission.score !== null ? <Tag color="blue">评分 {submission.score}</Tag> : <Tag>待评分</Tag>}
                   </Space>
                   <Typography.Text type="secondary">
                     提交人：{submission.submittedBy.displayName || submission.submittedBy.username}
@@ -172,6 +203,54 @@ export default function ExperimentDetailPage() {
                     提交时间：{new Date(submission.submittedAt).toLocaleString("zh-CN")}
                   </Typography.Text>
                   {submission.note ? <Typography.Text>备注：{submission.note}</Typography.Text> : null}
+                  {submission.feedback ? <Typography.Text>评语：{submission.feedback}</Typography.Text> : null}
+                  {submission.gradedAt ? (
+                    <Typography.Text type="secondary">
+                      评分时间：{new Date(submission.gradedAt).toLocaleString("zh-CN")}
+                    </Typography.Text>
+                  ) : null}
+
+                  {user.role === "TEACHER" ? (
+                    <Space wrap>
+                      <InputNumber
+                        min={0}
+                        max={100}
+                        precision={2}
+                        placeholder="分数"
+                        value={gradeDrafts[submission.id]?.score ?? submission.score ?? undefined}
+                        onChange={(value) => {
+                          setGradeDrafts((current) => ({
+                            ...current,
+                            [submission.id]: {
+                              ...current[submission.id],
+                              score: typeof value === "number" ? value : undefined,
+                            },
+                          }));
+                        }}
+                      />
+                      <Input
+                        style={{ width: 280 }}
+                        placeholder="评语（可选）"
+                        value={gradeDrafts[submission.id]?.feedback ?? submission.feedback ?? ""}
+                        onChange={(event) => {
+                          setGradeDrafts((current) => ({
+                            ...current,
+                            [submission.id]: {
+                              ...current[submission.id],
+                              feedback: event.target.value,
+                            },
+                          }));
+                        }}
+                      />
+                      <Button
+                        type="primary"
+                        loading={gradeDrafts[submission.id]?.loading}
+                        onClick={() => void onGrade(submission)}
+                      >
+                        提交评分
+                      </Button>
+                    </Space>
+                  ) : null}
                 </Space>
               </List.Item>
             )}
