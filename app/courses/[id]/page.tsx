@@ -27,10 +27,11 @@ import {
   Typography,
 } from "antd";
 import { coursesApi } from "@/lib/api/courses";
+import { announcementsApi } from "@/lib/api/announcements";
 import { experimentsApi } from "@/lib/api/experiments";
 import { resourcesApi } from "@/lib/api/resources";
 import { gradesApi } from "@/lib/api/grades";
-import type { CourseDetail, CourseGradeOverview, CourseResource, ResourceType } from "@/lib/api/types";
+import type { CourseAnnouncement, CourseDetail, CourseGradeOverview, CourseResource, ResourceType } from "@/lib/api/types";
 import { PlatformShell } from "@/components/platform-shell";
 import { useAuth } from "@/lib/auth/auth-context";
 
@@ -40,6 +41,7 @@ export default function CourseDetailPage() {
   const { user, loading } = useAuth();
 
   const [course, setCourse] = useState<CourseDetail | null>(null);
+  const [announcements, setAnnouncements] = useState<CourseAnnouncement[]>([]);
   const [resources, setResources] = useState<CourseResource[]>([]);
   const [gradeOverview, setGradeOverview] = useState<CourseGradeOverview | null>(null);
   const [busy, setBusy] = useState(false);
@@ -54,37 +56,28 @@ export default function CourseDetailPage() {
   const [resourceExternalUrl, setResourceExternalUrl] = useState("");
   const [resourceFile, setResourceFile] = useState<File | null>(null);
   const [resourceSubmitting, setResourceSubmitting] = useState(false);
-
-  const announcements = [
-    {
-      id: "1",
-      title: "实验规范说明",
-      content: "提交命名请使用 学号_姓名_实验名，报告与代码请打包后上传。",
-      date: "今天 09:20",
-    },
-    {
-      id: "2",
-      title: "课堂节奏提醒",
-      content: "本周完成环境验收与实验一预习，下周课堂进行现场答疑。",
-      date: "昨天 16:30",
-    },
-  ];
+  const [announcementTitle, setAnnouncementTitle] = useState("");
+  const [announcementContent, setAnnouncementContent] = useState("");
+  const [announcementSubmitting, setAnnouncementSubmitting] = useState(false);
 
   const loadCourse = useCallback(async () => {
     setBusy(true);
     setError(null);
     try {
-      const [detail, resourceData, overview] = await Promise.all([
+      const [detail, announcementData, resourceData, overview] = await Promise.all([
         coursesApi.detail(courseId),
+        announcementsApi.list(courseId),
         resourcesApi.list(courseId),
         user?.role === "TEACHER" ? gradesApi.overview(courseId) : Promise.resolve(null),
       ]);
       setCourse(detail);
+      setAnnouncements(announcementData.items);
       setResources(resourceData.items);
       setGradeOverview(overview);
     } catch (loadError) {
       setError(loadError instanceof Error ? loadError.message : "加载课程详情失败");
       setCourse(null);
+      setAnnouncements([]);
       setResources([]);
       setGradeOverview(null);
     } finally {
@@ -138,6 +131,25 @@ export default function CourseDetailPage() {
       setError(createError instanceof Error ? createError.message : "上传资源失败");
     } finally {
       setResourceSubmitting(false);
+    }
+  };
+
+  const onCreateAnnouncement = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    setError(null);
+    setAnnouncementSubmitting(true);
+    try {
+      await announcementsApi.create(courseId, {
+        title: announcementTitle,
+        content: announcementContent,
+      });
+      setAnnouncementTitle("");
+      setAnnouncementContent("");
+      await loadCourse();
+    } catch (createError) {
+      setError(createError instanceof Error ? createError.message : "发布公告失败");
+    } finally {
+      setAnnouncementSubmitting(false);
     }
   };
 
@@ -326,8 +338,28 @@ export default function CourseDetailPage() {
 
         <Col xs={24} xl={7}>
           <Card title="课堂公告" extra={<Tag color="gold">{announcements.length}</Tag>}>
+            {user.role === "TEACHER" ? (
+              <Form layout="vertical" onSubmitCapture={onCreateAnnouncement} style={{ marginBottom: 16 }}>
+                <Form.Item label="公告标题" required>
+                  <Input value={announcementTitle} onChange={(event) => setAnnouncementTitle(event.target.value)} required />
+                </Form.Item>
+                <Form.Item label="公告内容" required>
+                  <Input.TextArea
+                    value={announcementContent}
+                    onChange={(event) => setAnnouncementContent(event.target.value)}
+                    rows={4}
+                    required
+                    placeholder="例如：本周实验要求、课堂提醒、材料更新"
+                  />
+                </Form.Item>
+                <Button type="primary" htmlType="submit" loading={announcementSubmitting} block>
+                  发布公告
+                </Button>
+              </Form>
+            ) : null}
             <List
               dataSource={announcements}
+              locale={{ emptyText: "暂无课堂公告" }}
               renderItem={(item) => (
                 <List.Item>
                   <List.Item.Meta
@@ -335,7 +367,9 @@ export default function CourseDetailPage() {
                     description={
                       <Space direction="vertical" size={0}>
                         <Typography.Text type="secondary">{item.content}</Typography.Text>
-                        <Typography.Text type="secondary">{item.date}</Typography.Text>
+                        <Typography.Text type="secondary">
+                          {item.createdBy.displayName || item.createdBy.username} · {new Date(item.createdAt).toLocaleString("zh-CN")}
+                        </Typography.Text>
                       </Space>
                     }
                   />

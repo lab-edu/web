@@ -83,6 +83,15 @@ export type CourseResource = {
   uploadedAt: string;
 };
 
+export type CourseAnnouncement = {
+  id: string;
+  courseId: string;
+  title: string;
+  content: string;
+  createdBy: UserSummary;
+  createdAt: string;
+};
+
 export type CourseDetail = {
   id: string;
   title: string;
@@ -92,6 +101,14 @@ export type CourseDetail = {
   members: CourseMember[];
   experiments: ExperimentSummary[];
   createdAt: string;
+};
+
+export type CourseAnnouncementListData = {
+  items: CourseAnnouncement[];
+};
+
+export type CourseAnnouncementCreateData = {
+  announcement: CourseAnnouncement;
 };
 
 export type SubmissionDetail = {
