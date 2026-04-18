@@ -167,6 +167,9 @@ export default function CourseDetailPage() {
       subtitle={course?.description || "统一管理成员、公告与实验。"}
       actions={(
         <Space>
+          <Link href={`/courses/${courseId}/learning`}>
+            <Button>课程学习</Button>
+          </Link>
           <Button icon={<BellOutlined />} onClick={() => void loadCourse()}>
             刷新
           </Button>
