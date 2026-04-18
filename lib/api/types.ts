@@ -19,6 +19,14 @@ export type AuthLoginPayload = {
   password: string;
 };
 
+export type AuthRegisterPayload = {
+  username: string;
+  email: string;
+  password: string;
+  displayName?: string;
+  role: UserRole;
+};
+
 export type AuthLoginData = {
   user: UserSummary;
   tokenType: string;
@@ -26,6 +34,10 @@ export type AuthLoginData = {
 };
 
 export type AuthMeData = {
+  user: UserSummary;
+};
+
+export type AuthRegisterData = {
   user: UserSummary;
 };
 
@@ -57,6 +69,29 @@ export type ExperimentSummary = {
   createdByUsername: string;
 };
 
+export type ResourceType = "FILE" | "VIDEO" | "LINK";
+
+export type CourseResource = {
+  id: string;
+  courseId: string;
+  name: string;
+  type: ResourceType;
+  category: string | null;
+  fileName: string | null;
+  externalUrl: string | null;
+  uploadedBy: UserSummary;
+  uploadedAt: string;
+};
+
+export type CourseAnnouncement = {
+  id: string;
+  courseId: string;
+  title: string;
+  content: string;
+  createdBy: UserSummary;
+  createdAt: string;
+};
+
 export type CourseDetail = {
   id: string;
   title: string;
@@ -68,6 +103,14 @@ export type CourseDetail = {
   createdAt: string;
 };
 
+export type CourseAnnouncementListData = {
+  items: CourseAnnouncement[];
+};
+
+export type CourseAnnouncementCreateData = {
+  announcement: CourseAnnouncement;
+};
+
 export type SubmissionDetail = {
   id: string;
   experimentId: string;
@@ -77,8 +120,32 @@ export type SubmissionDetail = {
   note: string | null;
   score: number | null;
   feedback: string | null;
+  gradedBy: UserSummary | null;
+  gradedAt: string | null;
   latest: boolean;
   submittedAt: string;
+};
+
+export type ExperimentGradeItem = {
+  experimentId: string;
+  experimentTitle: string;
+  submissionId: string;
+  score: number | null;
+  feedback: string | null;
+  submittedAt: string;
+  gradedAt: string | null;
+};
+
+export type StudentGradeOverview = {
+  student: UserSummary;
+  submissionCount: number;
+  gradedCount: number;
+  averageScore: number | null;
+  experiments: ExperimentGradeItem[];
+};
+
+export type CourseGradeOverview = {
+  students: StudentGradeOverview[];
 };
 
 export type CourseListData = {
@@ -117,4 +184,12 @@ export type SubmissionListData = {
 
 export type SubmissionCreateData = {
   submission: SubmissionDetail;
+};
+
+export type ResourceListData = {
+  items: CourseResource[];
+};
+
+export type ResourceCreateData = {
+  resource: CourseResource;
 };

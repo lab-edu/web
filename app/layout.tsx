@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Noto_Sans_SC, Space_Mono } from "next/font/google";
 import { AppProviders } from "./providers";
+import "antd/dist/reset.css";
 import "./globals.css";
 
 const notoSansSc = Noto_Sans_SC({

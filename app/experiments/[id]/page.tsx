@@ -3,9 +3,29 @@
 import Link from "next/link";
 import { useParams, useSearchParams } from "next/navigation";
 import { FormEvent, useCallback, useEffect, useState } from "react";
+import {
+  CloudUploadOutlined,
+  HistoryOutlined,
+  ReloadOutlined,
+} from "@ant-design/icons";
+import {
+  Alert,
+  Button,
+  Card,
+  Empty,
+  Form,
+  Input,
+  InputNumber,
+  List,
+  Space,
+  Spin,
+  Tag,
+  Typography,
+} from "antd";
 import { experimentsApi } from "@/lib/api/experiments";
 import { submissionsApi } from "@/lib/api/submissions";
 import type { ExperimentDetail, SubmissionDetail } from "@/lib/api/types";
+import { PlatformShell } from "@/components/platform-shell";
 import { useAuth } from "@/lib/auth/auth-context";
 
 export default function ExperimentDetailPage() {
@@ -24,6 +44,7 @@ export default function ExperimentDetailPage() {
   const [note, setNote] = useState("");
   const [file, setFile] = useState<File | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [gradeDrafts, setGradeDrafts] = useState<Record<string, { score?: number; feedback?: string; loading?: boolean }>>({});
 
   const loadData = useCallback(async () => {
     if (!courseId) {
@@ -79,84 +100,163 @@ export default function ExperimentDetailPage() {
     }
   };
 
+  const onGrade = async (submission: SubmissionDetail) => {
+    const draft = gradeDrafts[submission.id] ?? {};
+    if (draft.score === undefined || Number.isNaN(draft.score)) {
+      setError("请先填写评分分数");
+      return;
+    }
+
+    setError(null);
+    setGradeDrafts((current) => ({
+      ...current,
+      [submission.id]: { ...draft, loading: true },
+    }));
+
+    try {
+      await submissionsApi.grade(submission.id, {
+        score: draft.score,
+        feedback: draft.feedback,
+      });
+      await loadData();
+    } catch (gradeError) {
+      setError(gradeError instanceof Error ? gradeError.message : "评分失败");
+    } finally {
+      setGradeDrafts((current) => ({
+        ...current,
+        [submission.id]: { ...current[submission.id], loading: false },
+      }));
+    }
+  };
+
   if (loading || !user) {
     return (
-      <main className="page-wrap">
-        <p className="muted">正在同步登录状态...</p>
+      <main className="auth-page">
+        <Spin size="large" tip="正在同步登录状态..." />
       </main>
     );
   }
 
   return (
-    <main className="page-wrap space-y-5">
-      <section className="panel">
-        <div className="panel-inner space-y-2">
-          <Link className="muted text-sm underline" href={courseId ? `/courses/${courseId}` : "/courses"}>
-            返回课程详情
+    <PlatformShell
+      title={experiment?.title || "实验详情"}
+      subtitle={experiment?.description || "查看实验要求与提交进度。"}
+      actions={
+        <Space>
+          <Link href={courseId ? `/courses/${courseId}` : "/courses"}>
+            <Button>返回课程</Button>
           </Link>
-          <h1 className="text-3xl font-bold">{experiment?.title || "实验详情"}</h1>
-          <p className="muted text-sm">{experiment?.description || "暂无描述"}</p>
-          <p className="muted text-sm">截止时间：{experiment?.dueAt ? new Date(experiment.dueAt).toLocaleString("zh-CN") : "未设置"}</p>
-        </div>
-      </section>
+          <Button icon={<ReloadOutlined />} onClick={() => void loadData()}>
+            刷新
+          </Button>
+        </Space>
+      }
+    >
+      <Card style={{ marginBottom: 16 }}>
+        <Space size={18} wrap>
+          <Tag color="blue">实验ID {experimentId}</Tag>
+          <Typography.Text type="secondary">
+            截止时间：{experiment?.dueAt ? new Date(experiment.dueAt).toLocaleString("zh-CN") : "未设置"}
+          </Typography.Text>
+        </Space>
+      </Card>
 
       {user.role === "STUDENT" ? (
-        <section className="panel">
-          <form className="panel-inner grid gap-3 md:grid-cols-2" onSubmit={onSubmit}>
-            <h2 className="text-xl font-semibold md:col-span-2">上传实验提交</h2>
-            <input
-              className="field md:col-span-2"
-              type="file"
-              onChange={(event) => setFile(event.target.files?.[0] ?? null)}
-              required
-            />
-            <textarea
-              className="field md:col-span-2 min-h-24"
-              placeholder="备注（可选）"
-              value={note}
-              onChange={(event) => setNote(event.target.value)}
-            />
-            <button className="btn btn-primary" type="submit" disabled={submitting}>
-              {submitting ? "提交中..." : "提交实验"}
-            </button>
-          </form>
-        </section>
+        <Card title={<Space><CloudUploadOutlined />上传实验提交</Space>} style={{ marginBottom: 16 }}>
+          <Form layout="vertical" onSubmitCapture={onSubmit}>
+            <Form.Item label="提交文件" required>
+              <Input type="file" onChange={(event) => setFile(event.target.files?.[0] ?? null)} required />
+            </Form.Item>
+            <Form.Item label="备注">
+              <Input.TextArea rows={4} value={note} onChange={(event) => setNote(event.target.value)} placeholder="可填写本次提交说明" />
+            </Form.Item>
+            <Button type="primary" htmlType="submit" loading={submitting}>
+              提交实验
+            </Button>
+          </Form>
+        </Card>
       ) : null}
 
-      <section className="panel">
-        <div className="panel-inner space-y-3">
-          <div className="flex items-center justify-between">
-            <h2 className="text-xl font-semibold">提交记录</h2>
-            <button className="btn btn-secondary" type="button" onClick={() => void loadData()}>
-              刷新
-            </button>
-          </div>
+      <Card title={<Space><HistoryOutlined />提交记录</Space>}>
+        {error ? <Alert type="error" message={error} showIcon style={{ marginBottom: 12 }} /> : null}
 
-          {busy ? <p className="muted text-sm">加载中...</p> : null}
-          {error ? <p className="text-sm text-red-700">{error}</p> : null}
+        {busy ? (
+          <Spin />
+        ) : submissions.length === 0 ? (
+          <Empty description="暂无提交记录" />
+        ) : (
+          <List
+            itemLayout="vertical"
+            dataSource={submissions}
+            renderItem={(submission) => (
+              <List.Item key={submission.id}>
+                <Space direction="vertical" size={3} style={{ width: "100%" }}>
+                  <Space wrap>
+                    <Typography.Text strong>{submission.fileName}</Typography.Text>
+                    {submission.latest ? <Tag color="green">最新提交</Tag> : null}
+                    {submission.score !== null ? <Tag color="blue">评分 {submission.score}</Tag> : <Tag>待评分</Tag>}
+                  </Space>
+                  <Typography.Text type="secondary">
+                    提交人：{submission.submittedBy.displayName || submission.submittedBy.username}
+                  </Typography.Text>
+                  <Typography.Text type="secondary">
+                    提交时间：{new Date(submission.submittedAt).toLocaleString("zh-CN")}
+                  </Typography.Text>
+                  {submission.note ? <Typography.Text>备注：{submission.note}</Typography.Text> : null}
+                  {submission.feedback ? <Typography.Text>评语：{submission.feedback}</Typography.Text> : null}
+                  {submission.gradedAt ? (
+                    <Typography.Text type="secondary">
+                      评分时间：{new Date(submission.gradedAt).toLocaleString("zh-CN")}
+                    </Typography.Text>
+                  ) : null}
 
-          {!busy && submissions.length === 0 ? (
-            <p className="muted text-sm">暂无提交记录。</p>
-          ) : (
-            <ul className="space-y-2">
-              {submissions.map((submission) => (
-                <li key={submission.id} className="rounded-lg border border-[var(--border)] bg-white/75 p-3 text-sm">
-                  <div className="flex flex-wrap items-center justify-between gap-2">
-                    <p className="font-semibold">{submission.fileName}</p>
-                    <span className="muted text-xs">{new Date(submission.submittedAt).toLocaleString("zh-CN")}</span>
-                  </div>
-                  <p className="muted mt-1 text-xs">提交人：{submission.submittedBy.displayName || submission.submittedBy.username}</p>
-                  {submission.note ? <p className="mt-2 text-xs">备注：{submission.note}</p> : null}
-                  <div className="mt-2 flex flex-wrap gap-2 text-xs">
-                    {submission.latest ? <span className="rounded-md bg-emerald-100 px-2 py-1 text-emerald-700">最新提交</span> : null}
-                    {submission.score !== null ? <span className="rounded-md bg-stone-100 px-2 py-1">评分 {submission.score}</span> : null}
-                  </div>
-                </li>
-              ))}
-            </ul>
-          )}
-        </div>
-      </section>
-    </main>
+                  {user.role === "TEACHER" ? (
+                    <Space wrap>
+                      <InputNumber
+                        min={0}
+                        max={100}
+                        precision={2}
+                        placeholder="分数"
+                        value={gradeDrafts[submission.id]?.score ?? submission.score ?? undefined}
+                        onChange={(value) => {
+                          setGradeDrafts((current) => ({
+                            ...current,
+                            [submission.id]: {
+                              ...current[submission.id],
+                              score: typeof value === "number" ? value : undefined,
+                            },
+                          }));
+                        }}
+                      />
+                      <Input
+                        style={{ width: 280 }}
+                        placeholder="评语（可选）"
+                        value={gradeDrafts[submission.id]?.feedback ?? submission.feedback ?? ""}
+                        onChange={(event) => {
+                          setGradeDrafts((current) => ({
+                            ...current,
+                            [submission.id]: {
+                              ...current[submission.id],
+                              feedback: event.target.value,
+                            },
+                          }));
+                        }}
+                      />
+                      <Button
+                        type="primary"
+                        loading={gradeDrafts[submission.id]?.loading}
+                        onClick={() => void onGrade(submission)}
+                      >
+                        提交评分
+                      </Button>
+                    </Space>
+                  ) : null}
+                </Space>
+              </List.Item>
+            )}
+          />
+        )}
+      </Card>
+    </PlatformShell>
   );
 }

@@ -1,6 +1,21 @@
 import type { ApiEnvelope } from "./types";
 
-const API_BASE = "/core/api/v1";
+const DEFAULT_CORE_BASE_URL = "http://localhost:8080";
+
+function normalizeBaseUrl(value: string) {
+  return value.endsWith("/") ? value.slice(0, -1) : value;
+}
+
+export function resolveCoreBaseUrl() {
+  const configuredBase =
+    process.env.NEXT_PUBLIC_CORE_BASE_URL
+    ?? process.env.CORE_BASE_URL
+    ?? DEFAULT_CORE_BASE_URL;
+
+  return normalizeBaseUrl(configuredBase);
+}
+
+const API_BASE = `${resolveCoreBaseUrl()}/api/v1`;
 
 export class ApiError extends Error {
   readonly status: number;
