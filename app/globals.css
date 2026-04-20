@@ -229,6 +229,127 @@ pre {
   font-weight: 600;
 }
 
+.rich-text-editor {
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: #ffffff;
+  padding: 12px;
+}
+
+.rich-text-editor__toolbar {
+  margin-bottom: 10px;
+}
+
+.rich-text-editor__toolbar .ant-btn {
+  min-width: 30px;
+}
+
+.rich-text-editor__toolbar-text {
+  font-weight: 700;
+  font-size: 12px;
+  line-height: 1;
+}
+
+.rich-text-editor__content.ProseMirror {
+  min-height: 160px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 12px 14px;
+  background: #fbfcff;
+  outline: none;
+  line-height: 1.75;
+}
+
+.rich-text-editor__content.ProseMirror:focus {
+  border-color: rgba(22, 71, 159, 0.42);
+  box-shadow: 0 0 0 3px rgba(22, 71, 159, 0.08);
+}
+
+.rich-text-editor__content.ProseMirror p {
+  margin: 0 0 0.75em;
+}
+
+.rich-text-editor__content.ProseMirror p:last-child {
+  margin-bottom: 0;
+}
+
+.rich-text-editor__content.ProseMirror ul,
+.rich-text-editor__content.ProseMirror ol {
+  padding-left: 1.5em;
+  margin: 0 0 0.75em;
+}
+
+.rich-text-editor__content.ProseMirror blockquote {
+  margin: 0 0 0.75em;
+  padding-left: 12px;
+  border-left: 3px solid rgba(22, 71, 159, 0.2);
+  color: var(--muted);
+}
+
+.rich-text-editor__content.ProseMirror pre {
+  margin: 0 0 0.75em;
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: #0f172a;
+  color: #e2e8f0;
+  overflow: auto;
+}
+
+.rich-text-editor__content.ProseMirror code {
+  background: rgba(15, 23, 42, 0.08);
+  border-radius: 6px;
+  padding: 0.15em 0.35em;
+}
+
+.rich-text-renderer {
+  line-height: 1.8;
+  color: var(--ink);
+}
+
+.rich-text-renderer p {
+  margin: 0 0 0.75em;
+}
+
+.rich-text-renderer p:last-child {
+  margin-bottom: 0;
+}
+
+.rich-text-renderer ul,
+.rich-text-renderer ol {
+  padding-left: 1.5em;
+  margin: 0 0 0.75em;
+}
+
+.rich-text-renderer blockquote {
+  margin: 0 0 0.75em;
+  padding-left: 12px;
+  border-left: 3px solid rgba(22, 71, 159, 0.2);
+  color: var(--muted);
+}
+
+.rich-text-renderer pre {
+  margin: 0 0 0.75em;
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: #0f172a;
+  color: #e2e8f0;
+  overflow: auto;
+}
+
+.rich-text-renderer code {
+  background: rgba(15, 23, 42, 0.08);
+  border-radius: 6px;
+  padding: 0.15em 0.35em;
+}
+
+.rich-text-renderer a {
+  color: #165dff;
+}
+
+.rich-text-renderer__empty {
+  color: var(--muted);
+}
+
 .muted {
   color: var(--muted);
 }
