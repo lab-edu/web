@@ -1,9 +1,11 @@
 "use client";
 
 import { useParams } from "next/navigation";
+import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { FormEvent, useCallback, useEffect, useState } from "react";
 import { BellOutlined } from "@ant-design/icons";
-import { Alert, Button, Card, Col, Empty, Form, Input, List, Row, Space, Spin, Tag, Typography } from "antd";
+import { Alert, Button, Card, Col, Empty, Form, Input, List, Row, Space, Tag, Typography } from "antd";
 import { announcementsApi } from "@/lib/api/announcements";
 import { coursesApi } from "@/lib/api/courses";
 import type { CourseAnnouncement, CourseDetail } from "@/lib/api/types";
@@ -14,6 +16,7 @@ import { useAuth } from "@/lib/auth/auth-context";
 
 export default function CourseNoticePage() {
   const params = useParams<{ id: string }>();
+  const searchParams = useSearchParams();
   const courseId = params.id;
   const { user, loading } = useAuth();
 
@@ -71,6 +74,7 @@ export default function CourseNoticePage() {
   }
 
   const isTeacher = user.role === "TEACHER";
+  const managementMode = isTeacher && searchParams.get("manage") === "1";
 
   return (
     <CourseShell
@@ -105,7 +109,7 @@ export default function CourseNoticePage() {
       <Row gutter={[16, 16]} style={{ marginTop: 16 }}>
         <Col xs={24} xl={16}>
           <Card title={<Space><BellOutlined />课程通知</Space>} extra={<Tag color="gold">{announcements.length}</Tag>} loading={busy}>
-            {isTeacher ? (
+            {managementMode ? (
               <Form layout="vertical" onSubmitCapture={onCreateAnnouncement} style={{ marginBottom: 16 }}>
                 <Form.Item label="公告标题" required>
                   <Input value={title} onChange={(event) => setTitle(event.target.value)} required />
@@ -123,6 +127,14 @@ export default function CourseNoticePage() {
                   发布通知
                 </Button>
               </Form>
+            ) : isTeacher ? (
+              <Alert
+                type="info"
+                showIcon
+                style={{ marginBottom: 16 }}
+                message="通知发布已归并到管理"
+                description={<Link href={`/courses/${courseId}/manage`}>进入管理页发布通知</Link>}
+              />
             ) : null}
 
             {announcements.length ? (

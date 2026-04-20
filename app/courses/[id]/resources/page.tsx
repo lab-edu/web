@@ -1,9 +1,11 @@
 "use client";
 
+import Link from "next/link";
 import { useParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { FormEvent, useCallback, useEffect, useState } from "react";
 import { FileOutlined, PlusCircleOutlined } from "@ant-design/icons";
-import { Alert, Button, Card, Col, Empty, Form, Input, List, Row, Select, Space, Spin, Tag, Typography } from "antd";
+import { Alert, Button, Card, Col, Empty, Form, Input, List, Row, Select, Space, Tag, Typography } from "antd";
 import { coursesApi } from "@/lib/api/courses";
 import { resourcesApi } from "@/lib/api/resources";
 import type { CourseDetail, CourseResource, ResourceType } from "@/lib/api/types";
@@ -14,6 +16,7 @@ import { useAuth } from "@/lib/auth/auth-context";
 
 export default function CourseResourcesPage() {
   const params = useParams<{ id: string }>();
+  const searchParams = useSearchParams();
   const courseId = params.id;
   const { user, loading } = useAuth();
 
@@ -83,12 +86,13 @@ export default function CourseResourcesPage() {
   }
 
   const isTeacher = user.role === "TEACHER";
+  const managementMode = isTeacher && searchParams.get("manage") === "1";
 
   return (
     <CourseShell title={course?.title || "课程资源"} subtitle="课程资源集中管理。" courseId={courseId} actions={<RefreshButton onClick={() => void loadData()} loading={busy} />}>
       {error ? <Alert style={{ marginBottom: 12 }} type="error" message={error} showIcon /> : null}
 
-      {isTeacher ? (
+      {managementMode ? (
         <Card title={<Space><PlusCircleOutlined />上传资源</Space>} style={{ marginBottom: 16 }}>
           <Form layout="vertical" onSubmitCapture={onCreateResource}>
             <Form.Item label="资源名称" required>
@@ -128,6 +132,14 @@ export default function CourseResourcesPage() {
             </Button>
           </Form>
         </Card>
+      ) : isTeacher ? (
+        <Alert
+          style={{ marginBottom: 16 }}
+          type="info"
+          showIcon
+          message="资源上传已归并到管理"
+          description={<Link href={`/courses/${courseId}/manage`}>进入管理页上传资源</Link>}
+        />
       ) : null}
 
       <Card title={<Space><FileOutlined />课程资源</Space>} loading={busy}>

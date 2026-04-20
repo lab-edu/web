@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import { BellOutlined, FileOutlined, ReadOutlined, TeamOutlined } from "@ant-design/icons";
-import { Alert, Card, Col, Empty, List, Row, Space, Spin, Tabs, Tag, Typography } from "antd";
+import { Alert, Card, Col, Empty, List, Row, Space, Tabs, Tag, Typography } from "antd";
 import { announcementsApi } from "@/lib/api/announcements";
 import { coursesApi } from "@/lib/api/courses";
 import { learningApi } from "@/lib/api/learning";
@@ -74,6 +74,20 @@ export default function CourseManagePage() {
   return (
     <CourseShell title={course?.title || "课程管理"} subtitle="按类型查看课程管理内容。" courseId={courseId}>
       {error ? <Alert style={{ marginBottom: 12 }} type="error" message={error} showIcon /> : null}
+
+      <Card style={{ marginBottom: 16 }}>
+        <Space direction="vertical" size={12} style={{ width: "100%" }}>
+          <Typography.Text type="secondary">
+            教师端管理功能统一入口，普通页面与学生视图保持一致。
+          </Typography.Text>
+          <Space wrap>
+            <Link href={`/courses/${courseId}/learning?manage=1`}>组织课程结构</Link>
+            <Link href={`/courses/${courseId}/resources?manage=1`}>上传课程资源</Link>
+            <Link href={`/courses/${courseId}/experiments?manage=1`}>发布实验</Link>
+            <Link href={`/courses/${courseId}?manage=1`}>发布通知</Link>
+          </Space>
+        </Space>
+      </Card>
 
       <Row gutter={[16, 16]}>
         <Col xs={24} md={8}><Card><Typography.Text type="secondary">成员</Typography.Text><Typography.Title level={3} style={{ margin: 0 }}>{course?.members.length ?? 0}</Typography.Title></Card></Col>

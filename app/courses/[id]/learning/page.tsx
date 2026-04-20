@@ -1,6 +1,8 @@
 "use client";
 
+import Link from "next/link";
 import { useParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
 import {
   Alert,
@@ -88,6 +90,7 @@ const nextSortOrder = <T extends { sortOrder: number }>(items: T[]) => {
 
 export default function CourseLearningPage() {
   const params = useParams<{ id: string }>();
+  const searchParams = useSearchParams();
   const courseId = params.id;
   const { user, loading } = useAuth();
 
@@ -140,6 +143,7 @@ export default function CourseLearningPage() {
   const [gradeDrafts, setGradeDrafts] = useState<Record<string, { score?: number; feedback?: string; loading?: boolean }>>({});
 
   const isTeacher = user?.role === "TEACHER";
+  const managementMode = isTeacher && searchParams.get("manage") === "1";
 
   const loadData = useCallback(async () => {
     setBusy(true);
@@ -550,7 +554,7 @@ export default function CourseLearningPage() {
 
       <Row gutter={[16, 16]} style={{ marginTop: 16 }}>
         <Col xs={24} xl={15}>
-          {isTeacher ? (
+          {managementMode ? (
             <Card title="组织课程结构" style={{ marginBottom: 16 }}>
               <Form layout="vertical" onSubmitCapture={createUnit}>
                 <Form.Item label="学习单元标题" required>
@@ -740,12 +744,20 @@ export default function CourseLearningPage() {
                 </Button>
               </Form>
             </Card>
+          ) : isTeacher ? (
+            <Alert
+              style={{ marginBottom: 16 }}
+              type="info"
+              showIcon
+              message="课程结构组织已归并到管理"
+              description={<Link href={`/courses/${courseId}/manage`}>进入管理页维护课程结构和任务</Link>}
+            />
           ) : null}
 
           <Card className="learning-structure-card" title={<Space><BookOutlined />课程结构</Space>} loading={busy}>
             <Space direction="vertical" size={16} style={{ width: "100%" }}>
               <Typography.Text type="secondary">
-                {isTeacher
+                {managementMode
                   ? "教师可以拖拽标题栏调整顺序，右侧按钮会把当前节点带入创建表单。"
                   : "课程内容按固定顺序展示，点击节点可以查看对应内容。"}
               </Typography.Text>
@@ -776,20 +788,20 @@ export default function CourseLearningPage() {
                       <Space
                         wrap
                         className="learning-structure-unit-label"
-                        style={{ width: "100%", cursor: isTeacher ? "grab" : "default", opacity: reorderBusyUnitId === unit.id ? 0.65 : 1 }}
+                        style={{ width: "100%", cursor: managementMode ? "grab" : "default", opacity: reorderBusyUnitId === unit.id ? 0.65 : 1 }}
                       >
                         <span
-                          draggable={isTeacher}
-                          onDragStart={isTeacher ? () => setDraggingNode({ level: "unit", id: unit.id }) : undefined}
-                          onDragEnd={isTeacher ? () => setDraggingNode(null) : undefined}
+                          draggable={managementMode}
+                          onDragStart={managementMode ? () => setDraggingNode({ level: "unit", id: unit.id }) : undefined}
+                          onDragEnd={managementMode ? () => setDraggingNode(null) : undefined}
                           onDragOver={(event) => {
-                            if (!isTeacher) {
+                            if (!managementMode) {
                               return;
                             }
                             event.preventDefault();
                           }}
                           onDrop={(event) => {
-                            if (!isTeacher || draggingNode?.level !== "unit") {
+                            if (!managementMode || draggingNode?.level !== "unit") {
                               return;
                             }
                             event.preventDefault();
@@ -798,14 +810,14 @@ export default function CourseLearningPage() {
                           }}
                           className="learning-structure-unit-title"
                         >
-                          {isTeacher ? <HolderOutlined className="learning-structure-handle" /> : null}
+                          {managementMode ? <HolderOutlined className="learning-structure-handle" /> : null}
                           <span>{unit.title}</span>
                         </span>
-                        {isTeacher ? <Tag color={unit.published ? "green" : "default"}>{unit.published ? "已发布" : "草稿"}</Tag> : null}
-                        {isTeacher ? <Tag>排序 {unit.sortOrder}</Tag> : null}
+                        {managementMode ? <Tag color={unit.published ? "green" : "default"}>{unit.published ? "已发布" : "草稿"}</Tag> : null}
+                        {managementMode ? <Tag>排序 {unit.sortOrder}</Tag> : null}
                       </Space>
                     ),
-                    extra: isTeacher ? (
+                    extra: managementMode ? (
                       <Space onClick={(event) => event.stopPropagation()}>
                         <Button size="small" icon={<PlusOutlined />} onClick={() => setSelectedUnitId(unit.id)}>
                           知识点
@@ -829,17 +841,17 @@ export default function CourseLearningPage() {
                             <Space wrap className="learning-structure-point-head" style={{ width: "100%", justifyContent: "space-between" }}>
                               <Space wrap>
                                 <span
-                                  draggable={isTeacher}
-                                  onDragStart={isTeacher ? () => setDraggingNode({ level: "point", id: point.id }) : undefined}
-                                  onDragEnd={isTeacher ? () => setDraggingNode(null) : undefined}
+                                  draggable={managementMode}
+                                  onDragStart={managementMode ? () => setDraggingNode({ level: "point", id: point.id }) : undefined}
+                                  onDragEnd={managementMode ? () => setDraggingNode(null) : undefined}
                                   onDragOver={(event) => {
-                                    if (!isTeacher) {
+                                    if (!managementMode) {
                                       return;
                                     }
                                     event.preventDefault();
                                   }}
                                   onDrop={(event) => {
-                                    if (!isTeacher || draggingNode?.level !== "point") {
+                                    if (!managementMode || draggingNode?.level !== "point") {
                                       return;
                                     }
                                     event.preventDefault();
@@ -848,14 +860,14 @@ export default function CourseLearningPage() {
                                   }}
                                   className="learning-structure-point-title"
                                 >
-                                  {isTeacher ? <BulbOutlined className="learning-structure-handle" /> : null}
+                                  {managementMode ? <BulbOutlined className="learning-structure-handle" /> : null}
                                   <span>知识点 {pointIndex + 1}</span>
                                   <strong>{point.title}</strong>
                                 </span>
                                 {point.estimatedMinutes ? <Tag color="cyan">预计 {point.estimatedMinutes} 分钟</Tag> : null}
                               </Space>
                               <Space>
-                                {isTeacher ? (
+                                {managementMode ? (
                                   <Button size="small" icon={<PlusOutlined />} onClick={() => setSelectedPointId(point.id)}>
                                     任务
                                   </Button>
@@ -872,17 +884,17 @@ export default function CourseLearningPage() {
                                   <div
                                     key={task.id}
                                     className="learning-structure-task"
-                                    draggable={isTeacher}
-                                    onDragStart={isTeacher ? () => setDraggingNode({ level: "task", id: task.id }) : undefined}
-                                    onDragEnd={isTeacher ? () => setDraggingNode(null) : undefined}
+                                    draggable={managementMode}
+                                    onDragStart={managementMode ? () => setDraggingNode({ level: "task", id: task.id }) : undefined}
+                                    onDragEnd={managementMode ? () => setDraggingNode(null) : undefined}
                                     onDragOver={(event) => {
-                                      if (!isTeacher) {
+                                      if (!managementMode) {
                                         return;
                                       }
                                       event.preventDefault();
                                     }}
                                     onDrop={(event) => {
-                                      if (!isTeacher || draggingNode?.level !== "task") {
+                                      if (!managementMode || draggingNode?.level !== "task") {
                                         return;
                                       }
                                       event.preventDefault();
@@ -895,7 +907,7 @@ export default function CourseLearningPage() {
                                       gap: 10,
                                       padding: "8px 0 8px 14px",
                                       borderTop: taskIndex === 0 ? "none" : "1px dashed rgba(22, 71, 159, 0.08)",
-                                      cursor: isTeacher ? "grab" : "default",
+                                      cursor: managementMode ? "grab" : "default",
                                       opacity: reorderBusyTaskId === task.id ? 0.65 : 1,
                                     }}
                                   >
@@ -1008,7 +1020,7 @@ export default function CourseLearningPage() {
             </div>
           ) : null}
 
-          {selectedTask && isTeacher ? (
+          {selectedTask && managementMode ? (
             <div id="homework" style={{ marginBottom: 16, scrollMarginTop: 92 }}>
               <Card title="答卷批阅">
               {taskBusy ? (

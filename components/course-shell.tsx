@@ -46,6 +46,40 @@ export function CourseShell({ title, subtitle, actions, children, courseId }: Co
   const hasCourse = Boolean(courseId);
   const base = hasCourse ? `/courses/${courseId}` : "/courses";
   const showManage = user?.role === "TEACHER" && hasCourse;
+  const menuItems = [
+    {
+      key: "home",
+      icon: <BellOutlined />,
+      label: hasCourse ? <Link href={base}>课程通知</Link> : "课程通知",
+    },
+    {
+      key: "experiments",
+      icon: <ReadOutlined />,
+      label: hasCourse ? <Link href={`${base}/experiments`}>实验列表</Link> : "实验列表",
+      disabled: !hasCourse,
+    },
+    {
+      key: "content",
+      icon: <BookOutlined />,
+      label: hasCourse ? <Link href={`${base}/learning`}>课程内容</Link> : "课程内容",
+      disabled: !hasCourse,
+    },
+    {
+      key: "resources",
+      icon: <FileTextOutlined />,
+      label: hasCourse ? <Link href={`${base}/resources`}>课程资源</Link> : "课程资源",
+      disabled: !hasCourse,
+    },
+    ...(showManage
+      ? [
+          {
+            key: "manage",
+            icon: <SettingOutlined />,
+            label: <Link href={`${base}/manage`}>管理</Link>,
+          },
+        ]
+      : []),
+  ];
 
   return (
     <ShellFrame
@@ -57,37 +91,7 @@ export function CourseShell({ title, subtitle, actions, children, courseId }: Co
       brandClassName="course-brand"
       siderClassName="course-sider"
       selectedMenuKey={selectedMenuKey}
-      menuItems={[
-        {
-          key: "home",
-          icon: <BellOutlined />,
-          label: hasCourse ? <Link href={base}>课程通知</Link> : "课程通知",
-        },
-        {
-          key: "experiments",
-          icon: <ReadOutlined />,
-          label: hasCourse ? <Link href={`${base}/experiments`}>实验列表</Link> : "实验列表",
-          disabled: !hasCourse,
-        },
-        {
-          key: "content",
-          icon: <BookOutlined />,
-          label: hasCourse ? <Link href={`${base}/learning`}>课程内容</Link> : "课程内容",
-          disabled: !hasCourse,
-        },
-        {
-          key: "resources",
-          icon: <FileTextOutlined />,
-          label: hasCourse ? <Link href={`${base}/resources`}>课程资源</Link> : "课程资源",
-          disabled: !hasCourse,
-        },
-        {
-          key: "manage",
-          icon: <SettingOutlined />,
-          label: hasCourse ? <Link href={`${base}/manage`}>管理</Link> : "管理",
-          disabled: !showManage,
-        },
-      ]}
+      menuItems={menuItems}
     >
       {children}
     </ShellFrame>

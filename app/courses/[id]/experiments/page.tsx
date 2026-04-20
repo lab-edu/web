@@ -1,10 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { useParams } from "next/navigation";
+import { useParams, useSearchParams } from "next/navigation";
 import { FormEvent, useCallback, useEffect, useState } from "react";
 import { CalendarOutlined, PlusCircleOutlined, ReadOutlined } from "@ant-design/icons";
-import { Alert, Button, Card, Empty, Form, Input, List, Row, Col, Space, Spin, Tag, Typography } from "antd";
+import { Alert, Button, Card, Empty, Form, Input, List, Row, Col, Space, Tag, Typography } from "antd";
 import { coursesApi } from "@/lib/api/courses";
 import { experimentsApi } from "@/lib/api/experiments";
 import type { CourseDetail, ExperimentSummary } from "@/lib/api/types";
@@ -15,6 +15,7 @@ import { useAuth } from "@/lib/auth/auth-context";
 
 export default function CourseExperimentsPage() {
   const params = useParams<{ id: string }>();
+  const searchParams = useSearchParams();
   const courseId = params.id;
   const { user, loading } = useAuth();
 
@@ -73,6 +74,7 @@ export default function CourseExperimentsPage() {
 
   const experiments = course?.experiments ?? [];
   const isTeacher = user.role === "TEACHER";
+  const managementMode = isTeacher && searchParams.get("manage") === "1";
 
   return (
     <CourseShell title={course?.title || "实验列表"} subtitle="课程实验在这里集中查看与发布。" courseId={courseId} actions={<RefreshButton onClick={() => void loadData()} loading={busy} />}>
@@ -99,7 +101,7 @@ export default function CourseExperimentsPage() {
         </Col>
       </Row>
 
-      {isTeacher ? (
+      {managementMode ? (
         <Card title={<Space><PlusCircleOutlined />发布实验</Space>} style={{ marginTop: 16, marginBottom: 16 }}>
           <Form layout="vertical" onSubmitCapture={onCreateExperiment}>
             <Form.Item label="实验标题" required>
@@ -124,6 +126,14 @@ export default function CourseExperimentsPage() {
             </Row>
           </Form>
         </Card>
+      ) : isTeacher ? (
+        <Alert
+          style={{ marginTop: 16, marginBottom: 16 }}
+          type="info"
+          showIcon
+          message="实验发布已归并到管理"
+          description={<Link href={`/courses/${courseId}/manage`}>进入管理页发布实验</Link>}
+        />
       ) : null}
 
       <Card title={<Space><ReadOutlined />实验列表</Space>} loading={busy}>
