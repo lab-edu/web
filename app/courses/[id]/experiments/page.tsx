@@ -1,12 +1,11 @@
 "use client";
 
 import Link from "next/link";
-import { useParams, useSearchParams } from "next/navigation";
-import { FormEvent, useCallback, useEffect, useState } from "react";
-import { CalendarOutlined, PlusCircleOutlined, ReadOutlined } from "@ant-design/icons";
-import { Alert, Button, Card, Empty, Form, Input, List, Row, Col, Space, Tag, Typography } from "antd";
+import { useParams } from "next/navigation";
+import { useCallback, useEffect, useState } from "react";
+import { CalendarOutlined, ReadOutlined } from "@ant-design/icons";
+import { Alert, Card, Empty, List, Row, Col, Space, Tag, Typography } from "antd";
 import { coursesApi } from "@/lib/api/courses";
-import { experimentsApi } from "@/lib/api/experiments";
 import type { CourseDetail, ExperimentSummary } from "@/lib/api/types";
 import { AuthLoadingState } from "@/components/auth-loading-state";
 import { CourseShell } from "@/components/course-shell";
@@ -16,17 +15,12 @@ import { useAuth } from "@/lib/auth/auth-context";
 
 export default function CourseExperimentsPage() {
   const params = useParams<{ id: string }>();
-  const searchParams = useSearchParams();
   const courseId = params.id;
   const { user, loading } = useAuth();
 
   const [course, setCourse] = useState<CourseDetail | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [title, setTitle] = useState("");
-  const [description, setDescription] = useState("");
-  const [dueAt, setDueAt] = useState("");
-  const [creating, setCreating] = useState(false);
 
   const loadData = useCallback(async () => {
     setBusy(true);
@@ -48,34 +42,11 @@ export default function CourseExperimentsPage() {
     }
   }, [loading, user, loadData]);
 
-  const onCreateExperiment = async (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    setCreating(true);
-    setError(null);
-    try {
-      await experimentsApi.create(courseId, {
-        title,
-        description,
-        dueAt: dueAt ? new Date(dueAt).toISOString() : null,
-      });
-      setTitle("");
-      setDescription("");
-      setDueAt("");
-      await loadData();
-    } catch (createError) {
-      setError(createError instanceof Error ? createError.message : "发布实验失败");
-    } finally {
-      setCreating(false);
-    }
-  };
-
   if (loading || !user) {
     return <AuthLoadingState />;
   }
 
   const experiments = course?.experiments ?? [];
-  const isTeacher = user.role === "TEACHER";
-  const managementMode = isTeacher && searchParams.get("manage") === "1";
 
   return (
     <CourseShell title={course?.title || "实验列表"} subtitle="课程实验在这里集中查看与发布。" courseId={courseId} actions={<RefreshButton onClick={() => void loadData()} loading={busy} />}>

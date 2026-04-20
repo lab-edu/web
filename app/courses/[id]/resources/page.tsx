@@ -1,14 +1,12 @@
 "use client";
 
-import Link from "next/link";
 import { useParams } from "next/navigation";
-import { useSearchParams } from "next/navigation";
-import { FormEvent, useCallback, useEffect, useState } from "react";
-import { FileOutlined, PlusCircleOutlined } from "@ant-design/icons";
-import { Alert, Button, Card, Col, Empty, Form, Input, List, Row, Select, Space, Tag, Typography } from "antd";
+import { useCallback, useEffect, useState } from "react";
+import { FileOutlined } from "@ant-design/icons";
+import { Alert, Card, Empty, List, Space, Tag, Typography } from "antd";
 import { coursesApi } from "@/lib/api/courses";
 import { resourcesApi } from "@/lib/api/resources";
-import type { CourseDetail, CourseResource, ResourceType } from "@/lib/api/types";
+import type { CourseDetail, CourseResource } from "@/lib/api/types";
 import { AuthLoadingState } from "@/components/auth-loading-state";
 import { CourseShell } from "@/components/course-shell";
 import { RefreshButton } from "@/components/refresh-button";
@@ -16,7 +14,6 @@ import { useAuth } from "@/lib/auth/auth-context";
 
 export default function CourseResourcesPage() {
   const params = useParams<{ id: string }>();
-  const searchParams = useSearchParams();
   const courseId = params.id;
   const { user, loading } = useAuth();
 
@@ -24,12 +21,6 @@ export default function CourseResourcesPage() {
   const [resources, setResources] = useState<CourseResource[]>([]);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [resourceName, setResourceName] = useState("");
-  const [resourceType, setResourceType] = useState<ResourceType>("FILE");
-  const [resourceCategory, setResourceCategory] = useState("");
-  const [resourceExternalUrl, setResourceExternalUrl] = useState("");
-  const [resourceFile, setResourceFile] = useState<File | null>(null);
-  const [submitting, setSubmitting] = useState(false);
 
   const loadData = useCallback(async () => {
     setBusy(true);
@@ -56,37 +47,9 @@ export default function CourseResourcesPage() {
     }
   }, [loading, user, loadData]);
 
-  const onCreateResource = async (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    setSubmitting(true);
-    setError(null);
-    try {
-      await resourcesApi.create(courseId, {
-        name: resourceName,
-        type: resourceType,
-        category: resourceCategory || undefined,
-        externalUrl: resourceType === "FILE" ? undefined : resourceExternalUrl,
-        file: resourceType === "FILE" ? (resourceFile ?? undefined) : undefined,
-      });
-      setResourceName("");
-      setResourceCategory("");
-      setResourceExternalUrl("");
-      setResourceFile(null);
-      setResourceType("FILE");
-      await loadData();
-    } catch (createError) {
-      setError(createError instanceof Error ? createError.message : "上传资源失败");
-    } finally {
-      setSubmitting(false);
-    }
-  };
-
   if (loading || !user) {
     return <AuthLoadingState />;
   }
-
-  const isTeacher = user.role === "TEACHER";
-  const managementMode = isTeacher && searchParams.get("manage") === "1";
 
   return (
     <CourseShell title={course?.title || "课程资源"} subtitle="课程资源集中管理。" courseId={courseId} actions={<RefreshButton onClick={() => void loadData()} loading={busy} />}>

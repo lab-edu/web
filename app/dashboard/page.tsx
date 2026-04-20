@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
-import { Alert, Button, Card, Col, Empty, Row, Space, Spin, Statistic, Typography } from "antd";
+import { Alert, Button, Card, Col, Empty, Row, Space, Spin, Statistic } from "antd";
 import { AppstoreOutlined, BookOutlined, MailOutlined, ReadOutlined } from "@ant-design/icons";
 import { AuthLoadingState } from "@/components/auth-loading-state";
 import { PersonalShell } from "@/components/personal-shell";

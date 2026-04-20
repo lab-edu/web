@@ -1,11 +1,9 @@
 "use client";
 
 import { useParams } from "next/navigation";
-import Link from "next/link";
-import { useSearchParams } from "next/navigation";
-import { FormEvent, useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { BellOutlined } from "@ant-design/icons";
-import { Alert, Button, Card, Col, Empty, Form, Input, List, Row, Space, Tag, Typography } from "antd";
+import { Alert, Card, Col, Empty, List, Row, Space, Tag, Typography } from "antd";
 import { announcementsApi } from "@/lib/api/announcements";
 import { coursesApi } from "@/lib/api/courses";
 import type { CourseAnnouncement, CourseDetail } from "@/lib/api/types";
@@ -17,7 +15,6 @@ import { useAuth } from "@/lib/auth/auth-context";
 
 export default function CourseNoticePage() {
   const params = useParams<{ id: string }>();
-  const searchParams = useSearchParams();
   const courseId = params.id;
   const { user, loading } = useAuth();
 
@@ -25,9 +22,6 @@ export default function CourseNoticePage() {
   const [announcements, setAnnouncements] = useState<CourseAnnouncement[]>([]);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [title, setTitle] = useState("");
-  const [content, setContent] = useState("");
-  const [submitting, setSubmitting] = useState(false);
 
   const loadData = useCallback(async () => {
     setBusy(true);
@@ -54,28 +48,10 @@ export default function CourseNoticePage() {
     }
   }, [loading, user, loadData]);
 
-  const onCreateAnnouncement = async (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    setSubmitting(true);
-    setError(null);
-    try {
-      await announcementsApi.create(courseId, { title, content });
-      setTitle("");
-      setContent("");
-      await loadData();
-    } catch (createError) {
-      setError(createError instanceof Error ? createError.message : "发布公告失败");
-    } finally {
-      setSubmitting(false);
-    }
-  };
 
   if (loading || !user) {
     return <AuthLoadingState />;
   }
-
-  const isTeacher = user.role === "TEACHER";
-  const managementMode = isTeacher && searchParams.get("manage") === "1";
 
   return (
     <CourseShell
