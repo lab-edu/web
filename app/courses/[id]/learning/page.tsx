@@ -30,6 +30,7 @@ import type {
   CourseLearningDetail,
   CourseLearningOverview,
   CourseLearningTaskSubmission,
+  LearningTaskKind,
   LearningMaterialType,
   LearningQuestionType,
   LearningTaskType,
@@ -38,6 +39,11 @@ import type {
 const taskTypeOptions: Array<{ label: string; value: LearningTaskType }> = [
   { label: "媒体学习", value: "MEDIA" },
   { label: "随堂测试", value: "QUIZ" },
+];
+
+const taskKindOptions: Array<{ label: string; value: LearningTaskKind }> = [
+  { label: "学习任务", value: "LEARNING" },
+  { label: "作业", value: "HOMEWORK" },
 ];
 
 const materialTypeOptions: Array<{ label: string; value: LearningMaterialType }> = [
@@ -81,6 +87,7 @@ export default function CourseLearningPage() {
   const [taskTitle, setTaskTitle] = useState("");
   const [taskDescription, setTaskDescription] = useState("");
   const [taskType, setTaskType] = useState<LearningTaskType>("MEDIA");
+  const [taskKind, setTaskKind] = useState<LearningTaskKind>("LEARNING");
   const [materialType, setMaterialType] = useState<LearningMaterialType>("FILE");
   const [contentText, setContentText] = useState("");
   const [mediaUrl, setMediaUrl] = useState("");
@@ -88,10 +95,16 @@ export default function CourseLearningPage() {
   const [optionsText, setOptionsText] = useState("");
   const [referenceAnswer, setReferenceAnswer] = useState("");
   const [taskMaxScore, setTaskMaxScore] = useState<number | null>(10);
+  const [taskStartAt, setTaskStartAt] = useState("");
+  const [taskDueAt, setTaskDueAt] = useState("");
+  const [notifyOnStart, setNotifyOnStart] = useState(true);
+  const [notifyBeforeDue24h, setNotifyBeforeDue24h] = useState(true);
+  const [notifyOnDue, setNotifyOnDue] = useState(true);
   const [taskRequired, setTaskRequired] = useState(true);
   const [taskSortOrder, setTaskSortOrder] = useState<number | null>(null);
   const [taskFile, setTaskFile] = useState<File | null>(null);
   const [taskSubmitting, setTaskSubmitting] = useState(false);
+  const [reorderBusyTaskId, setReorderBusyTaskId] = useState<string | null>(null);
 
   const [answerText, setAnswerText] = useState("");
   const [answerFile, setAnswerFile] = useState<File | null>(null);
@@ -306,6 +319,7 @@ export default function CourseLearningPage() {
         title: taskTitle,
         description: taskDescription,
         taskType,
+        taskKind,
         materialType: taskType === "MEDIA" ? materialType : undefined,
         contentText: contentText || undefined,
         mediaUrl: mediaUrl || undefined,
@@ -313,6 +327,11 @@ export default function CourseLearningPage() {
         optionsText: taskType === "QUIZ" ? optionsText : undefined,
         referenceAnswer: referenceAnswer || undefined,
         maxScore: taskMaxScore ?? undefined,
+        startAt: taskStartAt || undefined,
+        dueAt: taskDueAt || undefined,
+        notifyOnStart,
+        notifyBeforeDue24h,
+        notifyOnDue,
         required: taskRequired,
         sortOrder: taskSortOrder ?? undefined,
         file: taskType === "MEDIA" && materialType === "FILE" ? taskFile ?? undefined : undefined,
@@ -324,6 +343,12 @@ export default function CourseLearningPage() {
       setOptionsText("");
       setReferenceAnswer("");
       setTaskMaxScore(10);
+      setTaskKind("LEARNING");
+      setTaskStartAt("");
+      setTaskDueAt("");
+      setNotifyOnStart(true);
+      setNotifyBeforeDue24h(true);
+      setNotifyOnDue(true);
       setTaskRequired(true);
       setTaskSortOrder(null);
       setTaskFile(null);
@@ -332,6 +357,34 @@ export default function CourseLearningPage() {
       setError(createError instanceof Error ? createError.message : "创建学习任务失败");
     } finally {
       setTaskSubmitting(false);
+    }
+  };
+
+  const reorderTask = async (pointId: string, taskId: string, direction: "up" | "down") => {
+    const targetPoint = detail?.units
+      .flatMap((unit) => unit.points)
+      .find((point) => point.id === pointId);
+    if (!targetPoint) {
+      return;
+    }
+    const index = targetPoint.tasks.findIndex((task) => task.id === taskId);
+    const swapIndex = direction === "up" ? index - 1 : index + 1;
+    if (index < 0 || swapIndex < 0 || swapIndex >= targetPoint.tasks.length) {
+      return;
+    }
+
+    const reorderedIds = targetPoint.tasks.map((task) => task.id);
+    [reorderedIds[index], reorderedIds[swapIndex]] = [reorderedIds[swapIndex], reorderedIds[index]];
+
+    setReorderBusyTaskId(taskId);
+    setError(null);
+    try {
+      await learningApi.reorderTasks(courseId, pointId, reorderedIds);
+      await loadData();
+    } catch (reorderError) {
+      setError(reorderError instanceof Error ? reorderError.message : "任务重排失败");
+    } finally {
+      setReorderBusyTaskId(null);
     }
   };
 
@@ -402,6 +455,9 @@ export default function CourseLearningPage() {
       subtitle="教师组织单元、知识点与任务，学生在同一界面完成学习、提交与批阅查看。"
       actions={(
         <Space>
+          <Link href="/homeworks">
+            <Button>作业中心</Button>
+          </Link>
           <Link href={`/courses/${courseId}`}>
             <Button>返回课程</Button>
           </Link>
@@ -536,21 +592,59 @@ export default function CourseLearningPage() {
                 </Form.Item>
                 <Row gutter={12}>
                   <Col xs={24} md={8}>
+                    <Form.Item label="任务用途">
+                      <Select value={taskKind} options={taskKindOptions} onChange={(value) => setTaskKind(value)} />
+                    </Form.Item>
+                  </Col>
+                  <Col xs={24} md={8}>
                     <Form.Item label="任务类型">
                       <Select value={taskType} options={taskTypeOptions} onChange={(value) => setTaskType(value)} />
                     </Form.Item>
                   </Col>
-                  <Col xs={24} md={8}>
+                  <Col xs={24} md={4}>
                     <Form.Item label="分值">
                       <InputNumber value={taskMaxScore} min={0} step={1} onChange={(value) => setTaskMaxScore(typeof value === "number" ? value : null)} style={{ width: "100%" }} />
                     </Form.Item>
                   </Col>
-                  <Col xs={24} md={8}>
+                  <Col xs={24} md={4}>
                     <Form.Item label="排序">
                       <InputNumber value={taskSortOrder} min={0} onChange={(value) => setTaskSortOrder(typeof value === "number" ? value : null)} style={{ width: "100%" }} />
                     </Form.Item>
                   </Col>
                 </Row>
+                {taskKind === "HOMEWORK" ? (
+                  <>
+                    <Row gutter={12}>
+                      <Col xs={24} md={12}>
+                        <Form.Item label="开始时间" required>
+                          <Input type="datetime-local" value={taskStartAt} onChange={(event) => setTaskStartAt(event.target.value)} />
+                        </Form.Item>
+                      </Col>
+                      <Col xs={24} md={12}>
+                        <Form.Item label="截止时间" required>
+                          <Input type="datetime-local" value={taskDueAt} onChange={(event) => setTaskDueAt(event.target.value)} />
+                        </Form.Item>
+                      </Col>
+                    </Row>
+                    <Row gutter={12}>
+                      <Col xs={24} md={8}>
+                        <Form.Item label="开始提醒">
+                          <Select value={notifyOnStart ? "on" : "off"} options={[{ label: "开启", value: "on" }, { label: "关闭", value: "off" }]} onChange={(value) => setNotifyOnStart(value === "on")} />
+                        </Form.Item>
+                      </Col>
+                      <Col xs={24} md={8}>
+                        <Form.Item label="截止前24h提醒">
+                          <Select value={notifyBeforeDue24h ? "on" : "off"} options={[{ label: "开启", value: "on" }, { label: "关闭", value: "off" }]} onChange={(value) => setNotifyBeforeDue24h(value === "on")} />
+                        </Form.Item>
+                      </Col>
+                      <Col xs={24} md={8}>
+                        <Form.Item label="截止提醒">
+                          <Select value={notifyOnDue ? "on" : "off"} options={[{ label: "开启", value: "on" }, { label: "关闭", value: "off" }]} onChange={(value) => setNotifyOnDue(value === "on")} />
+                        </Form.Item>
+                      </Col>
+                    </Row>
+                  </>
+                ) : null}
                 {taskType === "MEDIA" ? (
                   <>
                     <Row gutter={12}>
@@ -660,12 +754,31 @@ export default function CourseLearningPage() {
                                       <Space wrap>
                                         <FileOutlined />
                                         <span>{task.title}</span>
+                                        <Tag color={task.taskKind === "HOMEWORK" ? "gold" : "default"}>{task.taskKind === "HOMEWORK" ? "作业" : "学习"}</Tag>
                                         <Tag>{task.taskType === "MEDIA" ? "媒体学习" : "随堂测试"}</Tag>
                                         <Tag>分值 {task.maxScore}</Tag>
                                       </Space>
                                     )}
                                     description={task.description || "暂无说明"}
                                   />
+                                  {isTeacher ? (
+                                    <Space>
+                                      <Button
+                                        size="small"
+                                        disabled={reorderBusyTaskId === task.id}
+                                        onClick={() => void reorderTask(point.id, task.id, "up")}
+                                      >
+                                        上移
+                                      </Button>
+                                      <Button
+                                        size="small"
+                                        disabled={reorderBusyTaskId === task.id}
+                                        onClick={() => void reorderTask(point.id, task.id, "down")}
+                                      >
+                                        下移
+                                      </Button>
+                                    </Space>
+                                  ) : null}
                                 </List.Item>
                               )}
                             />
@@ -689,10 +802,17 @@ export default function CourseLearningPage() {
             {selectedTask ? (
               <Space direction="vertical" size={12} style={{ width: "100%" }}>
                 <Space wrap>
+                  <Tag color={selectedTask.taskKind === "HOMEWORK" ? "gold" : "default"}>{selectedTask.taskKind === "HOMEWORK" ? "作业" : "学习"}</Tag>
                   <Tag color="blue">{selectedTask.taskType === "MEDIA" ? "媒体学习" : "随堂测试"}</Tag>
                   <Tag>分值 {selectedTask.maxScore}</Tag>
                   {selectedTask.required ? <Tag color="red">必做</Tag> : <Tag>选做</Tag>}
                 </Space>
+                {selectedTask.taskKind === "HOMEWORK" ? (
+                  <Space wrap>
+                    {selectedTask.startAt ? <Tag>开始 {new Date(selectedTask.startAt).toLocaleString("zh-CN")}</Tag> : null}
+                    {selectedTask.dueAt ? <Tag color="orange">截止 {new Date(selectedTask.dueAt).toLocaleString("zh-CN")}</Tag> : null}
+                  </Space>
+                ) : null}
                 <Typography.Title level={4} style={{ margin: 0 }}>{selectedTask.title}</Typography.Title>
                 {selectedTask.description ? <Typography.Paragraph>{selectedTask.description}</Typography.Paragraph> : null}
                 {selectedTask.taskType === "MEDIA" ? (

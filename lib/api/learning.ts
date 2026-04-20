@@ -1,6 +1,7 @@
 import { apiRequest, resolveCoreBaseUrl } from "./client";
 import type {
   CourseLearningDetail,
+  CourseHomeworkListData,
   CourseLearningOverview,
   CourseLearningTaskSubmission,
   CourseLearningTaskSubmissionListData,
@@ -9,6 +10,7 @@ import type {
   CourseLearningPoint,
   LearningMaterialType,
   LearningQuestionType,
+  LearningTaskKind,
   LearningTaskType,
 } from "./types";
 
@@ -38,6 +40,7 @@ export const learningApi = {
       title: string;
       description?: string;
       taskType?: LearningTaskType;
+      taskKind?: LearningTaskKind;
       materialType?: LearningMaterialType;
       contentText?: string;
       mediaUrl?: string;
@@ -45,6 +48,11 @@ export const learningApi = {
       optionsText?: string;
       referenceAnswer?: string;
       maxScore?: number;
+      startAt?: string;
+      dueAt?: string;
+      notifyOnStart?: boolean;
+      notifyBeforeDue24h?: boolean;
+      notifyOnDue?: boolean;
       required?: boolean;
       sortOrder?: number;
       file?: File;
@@ -57,6 +65,9 @@ export const learningApi = {
     }
     if (payload.taskType) {
       formData.set("taskType", payload.taskType);
+    }
+    if (payload.taskKind) {
+      formData.set("taskKind", payload.taskKind);
     }
     if (payload.materialType) {
       formData.set("materialType", payload.materialType);
@@ -79,6 +90,21 @@ export const learningApi = {
     if (typeof payload.maxScore === "number") {
       formData.set("maxScore", String(payload.maxScore));
     }
+    if (payload.startAt) {
+      formData.set("startAt", payload.startAt);
+    }
+    if (payload.dueAt) {
+      formData.set("dueAt", payload.dueAt);
+    }
+    if (typeof payload.notifyOnStart === "boolean") {
+      formData.set("notifyOnStart", String(payload.notifyOnStart));
+    }
+    if (typeof payload.notifyBeforeDue24h === "boolean") {
+      formData.set("notifyBeforeDue24h", String(payload.notifyBeforeDue24h));
+    }
+    if (typeof payload.notifyOnDue === "boolean") {
+      formData.set("notifyOnDue", String(payload.notifyOnDue));
+    }
     if (typeof payload.required === "boolean") {
       formData.set("required", String(payload.required));
     }
@@ -93,6 +119,21 @@ export const learningApi = {
       method: "POST",
       body: formData,
     });
+  },
+  reorderTasks(courseId: string, pointId: string, orderedTaskIds: string[]) {
+    return apiRequest<CourseLearningDetail>(`/courses/${courseId}/learning/points/${pointId}/tasks/order`, {
+      method: "PATCH",
+      body: JSON.stringify({ orderedTaskIds }),
+    });
+  },
+  courseHomeworks(courseId: string) {
+    return apiRequest<CourseHomeworkListData>(`/courses/${courseId}/learning/homeworks`);
+  },
+  myHomeworks(courseId: string) {
+    return apiRequest<CourseHomeworkListData>(`/courses/${courseId}/learning/my-homeworks`);
+  },
+  myHomeworksAllCourses() {
+    return apiRequest<CourseHomeworkListData>("/homeworks/mine");
   },
   taskFileUrl(courseId: string, taskId: string) {
     return `${resolveCoreBaseUrl()}/api/v1/courses/${courseId}/learning/tasks/${taskId}/file`;

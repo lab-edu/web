@@ -7,6 +7,7 @@ import {
   AppstoreOutlined,
   BookOutlined,
   FileTextOutlined,
+  ReadOutlined,
   LogoutOutlined,
   UserOutlined,
 } from "@ant-design/icons";
@@ -50,6 +51,11 @@ export function PlatformShell({ title, subtitle, actions, children }: PlatformSh
               key: "courses",
               icon: <AppstoreOutlined />,
               label: <Link href="/courses">课程中心</Link>,
+            },
+            {
+              key: "homeworks",
+              icon: <ReadOutlined />,
+              label: <Link href="/homeworks">作业中心</Link>,
             },
             {
               key: "announcement",

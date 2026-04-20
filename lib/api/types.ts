@@ -196,6 +196,8 @@ export type ResourceCreateData = {
 
 export type LearningTaskType = "MEDIA" | "QUIZ";
 
+export type LearningTaskKind = "LEARNING" | "HOMEWORK";
+
 export type LearningMaterialType = "FILE" | "LINK" | "TEXT";
 
 export type LearningQuestionType = "SINGLE_CHOICE" | "MULTIPLE_CHOICE" | "SHORT_ANSWER";
@@ -206,6 +208,7 @@ export type CourseLearningTaskSummary = {
   title: string;
   description: string | null;
   taskType: LearningTaskType;
+  taskKind: LearningTaskKind;
   materialType: LearningMaterialType | null;
   questionType: LearningQuestionType | null;
   contentText: string | null;
@@ -214,6 +217,11 @@ export type CourseLearningTaskSummary = {
   options: string[];
   referenceAnswer: string | null;
   maxScore: number;
+  startAt: string | null;
+  dueAt: string | null;
+  notifyOnStart: boolean;
+  notifyBeforeDue24h: boolean;
+  notifyOnDue: boolean;
   required: boolean;
   sortOrder: number;
   createdBy: UserSummary;
@@ -280,9 +288,12 @@ export type LearningTaskProgress = {
   taskId: string;
   taskTitle: string;
   taskType: LearningTaskType;
+  taskKind: LearningTaskKind;
   materialType: LearningMaterialType | null;
   questionType: LearningQuestionType | null;
   maxScore: number;
+  startAt: string | null;
+  dueAt: string | null;
   submissionId: string | null;
   answerText: string | null;
   fileName: string | null;
@@ -306,4 +317,24 @@ export type CourseLearningOverview = {
   pointCount: number;
   taskCount: number;
   students: StudentLearningOverview[];
+};
+
+export type CourseHomeworkItem = {
+  taskId: string;
+  courseId: string;
+  courseTitle: string;
+  taskTitle: string;
+  startAt: string | null;
+  dueAt: string | null;
+  status: "NOT_STARTED" | "IN_PROGRESS" | "SUBMITTED" | "OVERDUE";
+  latestSubmissionId: string | null;
+  latestSubmittedAt: string | null;
+  latestScore: number | null;
+  submittedCount: number;
+  totalStudentCount: number;
+  remainingSeconds: number | null;
+};
+
+export type CourseHomeworkListData = {
+  items: CourseHomeworkItem[];
 };
