@@ -739,7 +739,9 @@ export default function CourseLearningPage() {
           <Card title={<Space><BookOutlined />课程结构</Space>} loading={busy}>
             <Space direction="vertical" size={16} style={{ width: "100%" }}>
               <Typography.Text type="secondary">
-                拖拽标题栏调整顺序，右侧按钮会把当前节点带入创建表单。
+                {isTeacher
+                  ? "教师可以拖拽标题栏调整顺序，右侧按钮会把当前节点带入创建表单。"
+                  : "课程内容按固定顺序展示，点击节点可以查看对应内容。"}
               </Typography.Text>
               {detail?.units?.length ? (
                 <Collapse
@@ -751,8 +753,8 @@ export default function CourseLearningPage() {
                       <Space wrap style={{ width: "100%", cursor: isTeacher ? "grab" : "default", opacity: reorderBusyUnitId === unit.id ? 0.65 : 1 }}>
                         <span
                           draggable={isTeacher}
-                          onDragStart={() => setDraggingNode({ level: "unit", id: unit.id })}
-                          onDragEnd={() => setDraggingNode(null)}
+                          onDragStart={isTeacher ? () => setDraggingNode({ level: "unit", id: unit.id }) : undefined}
+                          onDragEnd={isTeacher ? () => setDraggingNode(null) : undefined}
                           onDragOver={(event) => {
                             if (!isTeacher) {
                               return;
@@ -768,10 +770,10 @@ export default function CourseLearningPage() {
                             setDraggingNode(null);
                           }}
                         >
-                          <HolderOutlined /> {unit.title}
+                          {isTeacher ? <HolderOutlined /> : null} {unit.title}
                         </span>
                         <Tag color={unit.published ? "green" : "default"}>{unit.published ? "已发布" : "草稿"}</Tag>
-                        <Tag>排序 {unit.sortOrder}</Tag>
+                        {isTeacher ? <Tag>排序 {unit.sortOrder}</Tag> : null}
                       </Space>
                     ),
                     extra: isTeacher ? (
@@ -798,8 +800,8 @@ export default function CourseLearningPage() {
                               <Space wrap>
                                 <span
                                   draggable={isTeacher}
-                                  onDragStart={() => setDraggingNode({ level: "point", id: point.id })}
-                                  onDragEnd={() => setDraggingNode(null)}
+                                  onDragStart={isTeacher ? () => setDraggingNode({ level: "point", id: point.id }) : undefined}
+                                  onDragEnd={isTeacher ? () => setDraggingNode(null) : undefined}
                                   onDragOver={(event) => {
                                     if (!isTeacher) {
                                       return;
@@ -815,7 +817,7 @@ export default function CourseLearningPage() {
                                     setDraggingNode(null);
                                   }}
                                 >
-                                  <BulbOutlined /> 知识点{pointIndex + 1}：{point.title}
+                                  {isTeacher ? <BulbOutlined /> : null} 知识点{pointIndex + 1}：{point.title}
                                 </span>
                                 {point.estimatedMinutes ? <Tag color="cyan">预计 {point.estimatedMinutes} 分钟</Tag> : null}
                               </Space>
@@ -837,8 +839,8 @@ export default function CourseLearningPage() {
                                   <div
                                     key={task.id}
                                     draggable={isTeacher}
-                                    onDragStart={() => setDraggingNode({ level: "task", id: task.id })}
-                                    onDragEnd={() => setDraggingNode(null)}
+                                    onDragStart={isTeacher ? () => setDraggingNode({ level: "task", id: task.id }) : undefined}
+                                    onDragEnd={isTeacher ? () => setDraggingNode(null) : undefined}
                                     onDragOver={(event) => {
                                       if (!isTeacher) {
                                         return;

@@ -20,7 +20,7 @@ export default function LoginPage() {
 
   useEffect(() => {
     if (!loading && user) {
-      router.replace("/courses");
+      router.replace("/dashboard");
     }
   }, [loading, user, router]);
 
@@ -31,7 +31,7 @@ export default function LoginPage() {
 
     try {
       await login({ identifier, password });
-      router.replace("/courses");
+      router.replace("/dashboard");
     } catch (submitError) {
       if (submitError instanceof ApiError) {
         setError(submitError.message);
@@ -64,7 +64,7 @@ export default function LoginPage() {
                     <BookOutlined /> 课程空间
                   </Typography.Text>
                   <Typography.Text style={{ color: "#fff" }}>
-                    <SafetyCertificateOutlined /> Cookie 会话鉴权
+                    <SafetyCertificateOutlined /> 登录后自动保持访问状态
                   </Typography.Text>
                 </Space>
               </Space>
