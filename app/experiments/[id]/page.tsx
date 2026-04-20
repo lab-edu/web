@@ -25,6 +25,8 @@ import { submissionsApi } from "@/lib/api/submissions";
 import type { ExperimentDetail, SubmissionDetail } from "@/lib/api/types";
 import { AuthLoadingState } from "@/components/auth-loading-state";
 import { CourseShell } from "@/components/course-shell";
+import { RichTextEditor } from "@/components/rich-text-editor";
+import { RichTextRenderer } from "@/components/rich-text-renderer";
 import { RefreshButton } from "@/components/refresh-button";
 import { useAuth } from "@/lib/auth/auth-context";
 
@@ -156,7 +158,11 @@ export default function ExperimentDetailPage() {
               <Input type="file" onChange={(event) => setFile(event.target.files?.[0] ?? null)} required />
             </Form.Item>
             <Form.Item label="备注">
-              <Input.TextArea rows={4} value={note} onChange={(event) => setNote(event.target.value)} placeholder="可填写本次提交说明" />
+              <RichTextEditor
+                value={note}
+                onChange={setNote}
+                placeholder="可填写本次提交说明"
+              />
             </Form.Item>
             <Button type="primary" htmlType="submit" loading={submitting}>
               提交实验
@@ -190,8 +196,8 @@ export default function ExperimentDetailPage() {
                   <Typography.Text type="secondary">
                     提交时间：{new Date(submission.submittedAt).toLocaleString("zh-CN")}
                   </Typography.Text>
-                  {submission.note ? <Typography.Text>备注：{submission.note}</Typography.Text> : null}
-                  {submission.feedback ? <Typography.Text>评语：{submission.feedback}</Typography.Text> : null}
+                  {submission.note ? <RichTextRenderer html={submission.note} className="muted" /> : null}
+                  {submission.feedback ? <RichTextRenderer html={submission.feedback} className="muted" /> : null}
                   {submission.gradedAt ? (
                     <Typography.Text type="secondary">
                       评分时间：{new Date(submission.gradedAt).toLocaleString("zh-CN")}
