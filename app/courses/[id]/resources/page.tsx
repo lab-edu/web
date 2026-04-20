@@ -7,7 +7,9 @@ import { Alert, Button, Card, Col, Empty, Form, Input, List, Row, Select, Space,
 import { coursesApi } from "@/lib/api/courses";
 import { resourcesApi } from "@/lib/api/resources";
 import type { CourseDetail, CourseResource, ResourceType } from "@/lib/api/types";
+import { AuthLoadingState } from "@/components/auth-loading-state";
 import { CourseShell } from "@/components/course-shell";
+import { RefreshButton } from "@/components/refresh-button";
 import { useAuth } from "@/lib/auth/auth-context";
 
 export default function CourseResourcesPage() {
@@ -77,17 +79,13 @@ export default function CourseResourcesPage() {
   };
 
   if (loading || !user) {
-    return (
-      <main className="auth-page">
-        <Spin size="large" tip="正在同步登录状态..." />
-      </main>
-    );
+    return <AuthLoadingState />;
   }
 
   const isTeacher = user.role === "TEACHER";
 
   return (
-    <CourseShell title={course?.title || "课程资源"} subtitle="课程资源集中管理。" courseId={courseId} actions={<Button onClick={() => void loadData()}>刷新</Button>}>
+    <CourseShell title={course?.title || "课程资源"} subtitle="课程资源集中管理。" courseId={courseId} actions={<RefreshButton onClick={() => void loadData()} loading={busy} />}>
       {error ? <Alert style={{ marginBottom: 12 }} type="error" message={error} showIcon /> : null}
 
       {isTeacher ? (

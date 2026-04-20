@@ -10,6 +10,7 @@ import { coursesApi } from "@/lib/api/courses";
 import { learningApi } from "@/lib/api/learning";
 import { resourcesApi } from "@/lib/api/resources";
 import type { CourseAnnouncement, CourseDetail, CourseResource, CourseLearningOverview } from "@/lib/api/types";
+import { AuthLoadingState } from "@/components/auth-loading-state";
 import { CourseShell } from "@/components/course-shell";
 import { useAuth } from "@/lib/auth/auth-context";
 
@@ -57,11 +58,7 @@ export default function CourseManagePage() {
   }, [loading, user, loadData]);
 
   if (loading || !user) {
-    return (
-      <main className="auth-page">
-        <Spin size="large" tip="正在同步登录状态..." />
-      </main>
-    );
+    return <AuthLoadingState />;
   }
 
   if (user.role !== "TEACHER") {

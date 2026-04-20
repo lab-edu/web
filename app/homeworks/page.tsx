@@ -3,8 +3,10 @@
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { Alert, Button, Card, Empty, List, Space, Spin, Tag, Typography } from "antd";
-import { ClockCircleOutlined, ReloadOutlined } from "@ant-design/icons";
+import { ClockCircleOutlined } from "@ant-design/icons";
+import { AuthLoadingState } from "@/components/auth-loading-state";
 import { PersonalShell } from "@/components/personal-shell";
+import { RefreshButton } from "@/components/refresh-button";
 import { learningApi } from "@/lib/api/learning";
 import type { CourseHomeworkItem } from "@/lib/api/types";
 import { useAuth } from "@/lib/auth/auth-context";
@@ -76,11 +78,7 @@ export default function HomeworkCenterPage() {
   }, [items]);
 
   if (loading || !user) {
-    return (
-      <main className="auth-page">
-        <Spin size="large" tip="正在同步登录状态..." />
-      </main>
-    );
+    return <AuthLoadingState />;
   }
 
   return (
@@ -88,9 +86,7 @@ export default function HomeworkCenterPage() {
       title="作业中心"
       subtitle="统一查看所有课程作业进度、提交与批阅状态。"
       actions={(
-        <Button icon={<ReloadOutlined />} onClick={() => void loadHomeworks()}>
-          刷新
-        </Button>
+        <RefreshButton onClick={() => void loadHomeworks()} loading={busy} />
       )}
     >
       {error ? <Alert style={{ marginBottom: 12 }} type="error" message={error} showIcon /> : null}

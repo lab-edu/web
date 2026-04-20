@@ -21,8 +21,10 @@ import {
   Tag,
   Typography,
 } from "antd";
-import { BookOutlined, BulbOutlined, FileOutlined, HolderOutlined, PlusOutlined, ReloadOutlined } from "@ant-design/icons";
+import { BookOutlined, BulbOutlined, FileOutlined, HolderOutlined, PlusOutlined } from "@ant-design/icons";
+import { AuthLoadingState } from "@/components/auth-loading-state";
 import { CourseShell } from "@/components/course-shell";
+import { RefreshButton } from "@/components/refresh-button";
 import { useAuth } from "@/lib/auth/auth-context";
 import { learningApi } from "@/lib/api/learning";
 import type {
@@ -507,11 +509,7 @@ export default function CourseLearningPage() {
   const overviewStudents = overview?.students ?? [];
 
   if (loading || !user) {
-    return (
-      <main className="auth-page">
-        <Spin size="large" tip="正在同步登录状态..." />
-      </main>
-    );
+    return <AuthLoadingState />;
   }
 
   return (
@@ -519,7 +517,7 @@ export default function CourseLearningPage() {
       courseId={courseId}
       title={detail?.courseTitle || "课程学习"}
       subtitle="教师组织单元、知识点与任务，学生在同一界面完成学习、提交与批阅查看。"
-      actions={<Button icon={<ReloadOutlined />} onClick={() => void loadData()}>刷新</Button>}
+      actions={<RefreshButton onClick={() => void loadData()} loading={busy} />}
     >
       {error ? <Alert style={{ marginBottom: 12 }} type="error" message={error} showIcon /> : null}
 

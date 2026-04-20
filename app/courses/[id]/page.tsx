@@ -7,7 +7,9 @@ import { Alert, Button, Card, Col, Empty, Form, Input, List, Row, Space, Spin, T
 import { announcementsApi } from "@/lib/api/announcements";
 import { coursesApi } from "@/lib/api/courses";
 import type { CourseAnnouncement, CourseDetail } from "@/lib/api/types";
+import { AuthLoadingState } from "@/components/auth-loading-state";
 import { CourseShell } from "@/components/course-shell";
+import { RefreshButton } from "@/components/refresh-button";
 import { useAuth } from "@/lib/auth/auth-context";
 
 export default function CourseNoticePage() {
@@ -65,11 +67,7 @@ export default function CourseNoticePage() {
   };
 
   if (loading || !user) {
-    return (
-      <main className="auth-page">
-        <Spin size="large" tip="正在同步登录状态..." />
-      </main>
-    );
+    return <AuthLoadingState />;
   }
 
   const isTeacher = user.role === "TEACHER";
@@ -79,7 +77,7 @@ export default function CourseNoticePage() {
       courseId={courseId}
       title={course?.title || "课程通知"}
       subtitle="默认页面展示课程通知，其他内容分别放在实验、资源、内容和管理标签页。"
-      actions={<Button icon={<BellOutlined />} onClick={() => void loadData()}>刷新</Button>}
+      actions={<RefreshButton onClick={() => void loadData()} loading={busy} />}
     >
       {error ? <Alert style={{ marginBottom: 12 }} type="error" message={error} showIcon /> : null}
 

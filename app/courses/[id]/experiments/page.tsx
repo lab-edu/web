@@ -8,7 +8,9 @@ import { Alert, Button, Card, Empty, Form, Input, List, Row, Col, Space, Spin, T
 import { coursesApi } from "@/lib/api/courses";
 import { experimentsApi } from "@/lib/api/experiments";
 import type { CourseDetail, ExperimentSummary } from "@/lib/api/types";
+import { AuthLoadingState } from "@/components/auth-loading-state";
 import { CourseShell } from "@/components/course-shell";
+import { RefreshButton } from "@/components/refresh-button";
 import { useAuth } from "@/lib/auth/auth-context";
 
 export default function CourseExperimentsPage() {
@@ -66,18 +68,14 @@ export default function CourseExperimentsPage() {
   };
 
   if (loading || !user) {
-    return (
-      <main className="auth-page">
-        <Spin size="large" tip="正在同步登录状态..." />
-      </main>
-    );
+    return <AuthLoadingState />;
   }
 
   const experiments = course?.experiments ?? [];
   const isTeacher = user.role === "TEACHER";
 
   return (
-    <CourseShell title={course?.title || "实验列表"} subtitle="课程实验在这里集中查看与发布。" courseId={courseId} actions={<Button onClick={() => void loadData()}>刷新</Button>}>
+    <CourseShell title={course?.title || "实验列表"} subtitle="课程实验在这里集中查看与发布。" courseId={courseId} actions={<RefreshButton onClick={() => void loadData()} loading={busy} />}>
       {error ? <Alert style={{ marginBottom: 12 }} type="error" message={error} showIcon /> : null}
 
       <Row gutter={[16, 16]}>

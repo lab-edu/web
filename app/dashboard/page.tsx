@@ -3,8 +3,10 @@
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { Alert, Button, Card, Col, Empty, Row, Space, Spin, Statistic, Typography } from "antd";
-import { AppstoreOutlined, BookOutlined, MailOutlined, ReadOutlined, ReloadOutlined } from "@ant-design/icons";
+import { AppstoreOutlined, BookOutlined, MailOutlined, ReadOutlined } from "@ant-design/icons";
+import { AuthLoadingState } from "@/components/auth-loading-state";
 import { PersonalShell } from "@/components/personal-shell";
+import { RefreshButton } from "@/components/refresh-button";
 import { coursesApi } from "@/lib/api/courses";
 import { learningApi } from "@/lib/api/learning";
 import type { CourseSummary, CourseHomeworkItem } from "@/lib/api/types";
@@ -48,11 +50,7 @@ export default function DashboardPage() {
   );
 
   if (loading || !user) {
-    return (
-      <main className="auth-page">
-        <Spin size="large" tip="正在同步登录状态..." />
-      </main>
-    );
+    return <AuthLoadingState />;
   }
 
   return (
@@ -60,9 +58,7 @@ export default function DashboardPage() {
       title="首页"
       subtitle="个人空间总览：课程、作业与快捷入口。"
       actions={(
-        <Button icon={<ReloadOutlined />} onClick={() => void loadData()}>
-          刷新
-        </Button>
+        <RefreshButton onClick={() => void loadData()} loading={busy} />
       )}
     >
       {error ? <Alert style={{ marginBottom: 12 }} type="error" message={error} showIcon /> : null}

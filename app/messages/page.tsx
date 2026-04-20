@@ -2,7 +2,8 @@
 
 import { useEffect } from "react";
 import { BellOutlined } from "@ant-design/icons";
-import { Card, Empty, Space, Spin, Tag, Typography } from "antd";
+import { Card, Empty, Space, Tag, Typography } from "antd";
+import { AuthLoadingState } from "@/components/auth-loading-state";
 import { PersonalShell } from "@/components/personal-shell";
 import { useAuth } from "@/lib/auth/auth-context";
 
@@ -14,11 +15,7 @@ export default function MessagesPage() {
   }, []);
 
   if (loading || !user) {
-    return (
-      <main className="auth-page">
-        <Spin size="large" tip="正在同步登录状态..." />
-      </main>
-    );
+    return <AuthLoadingState />;
   }
 
   return (

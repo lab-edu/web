@@ -26,7 +26,9 @@ import {
 } from "antd";
 import { coursesApi } from "@/lib/api/courses";
 import type { CourseSummary } from "@/lib/api/types";
+import { AuthLoadingState } from "@/components/auth-loading-state";
 import { PersonalShell } from "@/components/personal-shell";
+import { RefreshButton } from "@/components/refresh-button";
 import { useAuth } from "@/lib/auth/auth-context";
 
 export default function CoursesPage() {
@@ -97,11 +99,7 @@ export default function CoursesPage() {
   };
 
   if (loading || !user) {
-    return (
-      <main className="auth-page">
-        <Spin size="large" tip="正在同步登录状态..." />
-      </main>
-    );
+    return <AuthLoadingState />;
   }
 
   return (
@@ -110,9 +108,7 @@ export default function CoursesPage() {
       subtitle="选择课程后会进入独立课程空间，不再叠加个人空间导航。"
       actions={(
         <Space>
-          <Button icon={<BookOutlined />} onClick={() => void loadCourses()}>
-            刷新
-          </Button>
+          <RefreshButton onClick={() => void loadCourses()} loading={busy} />
           {isTeacher ? (
             <Button type="primary" icon={<PlusCircleOutlined />} onClick={() => setShowCreateModal(true)}>
               创建课程
