@@ -193,3 +193,148 @@ export type ResourceListData = {
 export type ResourceCreateData = {
   resource: CourseResource;
 };
+
+export type LearningTaskType = "MEDIA" | "QUIZ";
+
+export type LearningTaskKind = "LEARNING" | "HOMEWORK";
+
+export type LearningMaterialType = "FILE" | "LINK" | "TEXT";
+
+export type LearningQuestionType = "SINGLE_CHOICE" | "MULTIPLE_CHOICE" | "SHORT_ANSWER";
+
+export type CourseLearningTaskSummary = {
+  id: string;
+  knowledgePointId: string;
+  title: string;
+  description: string | null;
+  taskType: LearningTaskType;
+  taskKind: LearningTaskKind;
+  materialType: LearningMaterialType | null;
+  questionType: LearningQuestionType | null;
+  contentText: string | null;
+  mediaUrl: string | null;
+  fileName: string | null;
+  options: string[];
+  referenceAnswer: string | null;
+  maxScore: number;
+  startAt: string | null;
+  dueAt: string | null;
+  notifyOnStart: boolean;
+  notifyBeforeDue24h: boolean;
+  notifyOnDue: boolean;
+  required: boolean;
+  sortOrder: number;
+  createdBy: UserSummary;
+  createdAt: string;
+};
+
+export type CourseLearningPoint = {
+  id: string;
+  unitId: string;
+  title: string;
+  summary: string | null;
+  estimatedMinutes: number | null;
+  sortOrder: number;
+  createdBy: UserSummary;
+  createdAt: string;
+  tasks: CourseLearningTaskSummary[];
+};
+
+export type CourseLearningUnit = {
+  id: string;
+  courseId: string;
+  title: string;
+  description: string | null;
+  sortOrder: number;
+  published: boolean;
+  createdBy: UserSummary;
+  createdAt: string;
+  points: CourseLearningPoint[];
+};
+
+export type CourseLearningDetail = {
+  courseId: string;
+  courseTitle: string;
+  courseDescription: string | null;
+  inviteCode: string;
+  createdAt: string;
+  units: CourseLearningUnit[];
+};
+
+export type CourseLearningTaskSubmission = {
+  id: string;
+  taskId: string;
+  submittedBy: UserSummary;
+  answerText: string | null;
+  fileName: string | null;
+  filePath: string | null;
+  score: number | null;
+  feedback: string | null;
+  gradedBy: UserSummary | null;
+  gradedAt: string | null;
+  latest: boolean;
+  submittedAt: string;
+};
+
+export type CourseLearningTaskSubmissionListData = {
+  items: CourseLearningTaskSubmission[];
+};
+
+export type LearningTaskProgress = {
+  unitId: string;
+  unitTitle: string;
+  pointId: string;
+  pointTitle: string;
+  taskId: string;
+  taskTitle: string;
+  taskType: LearningTaskType;
+  taskKind: LearningTaskKind;
+  materialType: LearningMaterialType | null;
+  questionType: LearningQuestionType | null;
+  maxScore: number;
+  startAt: string | null;
+  dueAt: string | null;
+  submissionId: string | null;
+  answerText: string | null;
+  fileName: string | null;
+  score: number | null;
+  feedback: string | null;
+  submittedAt: string | null;
+  gradedAt: string | null;
+  latest: boolean;
+};
+
+export type StudentLearningOverview = {
+  student: UserSummary;
+  submissionCount: number;
+  gradedCount: number;
+  averageScore: number | null;
+  tasks: LearningTaskProgress[];
+};
+
+export type CourseLearningOverview = {
+  unitCount: number;
+  pointCount: number;
+  taskCount: number;
+  students: StudentLearningOverview[];
+};
+
+export type CourseHomeworkItem = {
+  taskId: string;
+  courseId: string;
+  courseTitle: string;
+  taskTitle: string;
+  startAt: string | null;
+  dueAt: string | null;
+  status: "NOT_STARTED" | "IN_PROGRESS" | "SUBMITTED" | "OVERDUE";
+  latestSubmissionId: string | null;
+  latestSubmittedAt: string | null;
+  latestScore: number | null;
+  submittedCount: number;
+  totalStudentCount: number;
+  remainingSeconds: number | null;
+};
+
+export type CourseHomeworkListData = {
+  items: CourseHomeworkItem[];
+};

@@ -26,7 +26,9 @@ import {
 } from "antd";
 import { coursesApi } from "@/lib/api/courses";
 import type { CourseSummary } from "@/lib/api/types";
-import { PlatformShell } from "@/components/platform-shell";
+import { AuthLoadingState } from "@/components/auth-loading-state";
+import { PersonalShell } from "@/components/personal-shell";
+import { RefreshButton } from "@/components/refresh-button";
 import { useAuth } from "@/lib/auth/auth-context";
 
 export default function CoursesPage() {
@@ -97,22 +99,16 @@ export default function CoursesPage() {
   };
 
   if (loading || !user) {
-    return (
-      <main className="auth-page">
-        <Spin size="large" tip="正在同步登录状态..." />
-      </main>
-    );
+    return <AuthLoadingState />;
   }
 
   return (
-    <PlatformShell
+    <PersonalShell
       title={heading}
-      subtitle="课程、实验、公告与提交都在同一工作台内完成。"
+      subtitle="选择课程后会进入独立课程空间，不再叠加个人空间导航。"
       actions={(
         <Space>
-          <Button icon={<BookOutlined />} onClick={() => void loadCourses()}>
-            刷新
-          </Button>
+          <RefreshButton onClick={() => void loadCourses()} loading={busy} />
           {isTeacher ? (
             <Button type="primary" icon={<PlusCircleOutlined />} onClick={() => setShowCreateModal(true)}>
               创建课程
@@ -159,8 +155,8 @@ export default function CoursesPage() {
                   title={course.title}
                   extra={<Tag color="blue">成员 {course.memberCount}</Tag>}
                   actions={[
-                    <Link key="enter" href={`/courses/${course.id}`}>
-                      进入课程
+                    <Link key="enter" href={`/courses/${course.id}`} target="_blank" rel="noreferrer">
+                      打开课程空间
                     </Link>,
                   ]}
                 >
@@ -217,6 +213,6 @@ export default function CoursesPage() {
           </Form.Item>
         </Form>
       </Modal>
-    </PlatformShell>
+    </PersonalShell>
   );
 }

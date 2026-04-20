@@ -1,12 +1,10 @@
 "use client";
 
-import Link from "next/link";
 import { useParams, useSearchParams } from "next/navigation";
 import { FormEvent, useCallback, useEffect, useState } from "react";
 import {
   CloudUploadOutlined,
   HistoryOutlined,
-  ReloadOutlined,
 } from "@ant-design/icons";
 import {
   Alert,
@@ -25,7 +23,9 @@ import {
 import { experimentsApi } from "@/lib/api/experiments";
 import { submissionsApi } from "@/lib/api/submissions";
 import type { ExperimentDetail, SubmissionDetail } from "@/lib/api/types";
-import { PlatformShell } from "@/components/platform-shell";
+import { AuthLoadingState } from "@/components/auth-loading-state";
+import { CourseShell } from "@/components/course-shell";
+import { RefreshButton } from "@/components/refresh-button";
 import { useAuth } from "@/lib/auth/auth-context";
 
 export default function ExperimentDetailPage() {
@@ -130,27 +130,15 @@ export default function ExperimentDetailPage() {
   };
 
   if (loading || !user) {
-    return (
-      <main className="auth-page">
-        <Spin size="large" tip="正在同步登录状态..." />
-      </main>
-    );
+    return <AuthLoadingState />;
   }
 
   return (
-    <PlatformShell
+    <CourseShell
+      courseId={courseId || experiment?.courseId}
       title={experiment?.title || "实验详情"}
       subtitle={experiment?.description || "查看实验要求与提交进度。"}
-      actions={
-        <Space>
-          <Link href={courseId ? `/courses/${courseId}` : "/courses"}>
-            <Button>返回课程</Button>
-          </Link>
-          <Button icon={<ReloadOutlined />} onClick={() => void loadData()}>
-            刷新
-          </Button>
-        </Space>
-      }
+      actions={<RefreshButton onClick={() => void loadData()} loading={busy} />}
     >
       <Card style={{ marginBottom: 16 }}>
         <Space size={18} wrap>
@@ -257,6 +245,6 @@ export default function ExperimentDetailPage() {
           />
         )}
       </Card>
-    </PlatformShell>
+    </CourseShell>
   );
 }

@@ -18,8 +18,8 @@ web/
 │   ├── courses/                      # 课程列表/详情页
 │   └── experiments/                  # 实验详情与提交页
 ├── lib/api/                          # 统一 API 调用封装
-├── lib/auth/                         # 全局登录态管理
-├── middleware.ts                     # 路由守卫
+├── lib/auth/                         # 统一登录状态管理
+├── middleware.ts                     # 未登录访问拦截
 ├── public/                           # 静态资源
 ├── Dockerfile                        # 生产镜像构建文件
 ├── .dockerignore                     # Docker 构建上下文过滤
@@ -69,7 +69,7 @@ docker build -t lab-edu-web-test .
 
 - 前端业务请求统一通过 `lib/api/client.ts` 发送，默认使用：`NEXT_PUBLIC_CORE_BASE_URL`
 - 本地直连 core 可设置：`NEXT_PUBLIC_CORE_BASE_URL=http://localhost:8080`
-- 所有请求默认 `credentials: include`，由后端 `HttpOnly` Cookie 维持登录态
-- 登录态失效后，访问 `/courses`、`/experiments/*` 会自动跳回 `/login`
+- 请求会自动携带登录状态，用户刷新页面后仍可继续访问已登录内容
+- 登录状态失效后，访问课程与实验页面会自动回到登录页
 - `/register` 为公开页面，支持学生/教师账号创建
 - 不建议在页面组件里直接写 `fetch` 到后端地址，统一通过 `lib/api` 封装
