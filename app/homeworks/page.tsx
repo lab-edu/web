@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { Alert, Button, Card, Empty, List, Space, Spin, Tag, Typography } from "antd";
 import { ClockCircleOutlined, ReloadOutlined } from "@ant-design/icons";
-import { PlatformShell } from "@/components/platform-shell";
+import { PersonalShell } from "@/components/personal-shell";
 import { learningApi } from "@/lib/api/learning";
 import type { CourseHomeworkItem } from "@/lib/api/types";
 import { useAuth } from "@/lib/auth/auth-context";
@@ -84,7 +84,7 @@ export default function HomeworkCenterPage() {
   }
 
   return (
-    <PlatformShell
+    <PersonalShell
       title="作业中心"
       subtitle="统一查看所有课程作业进度、提交与批阅状态。"
       actions={(
@@ -141,6 +141,6 @@ export default function HomeworkCenterPage() {
       ) : (
         <Empty description="暂无作业" />
       )}
-    </PlatformShell>
+    </PersonalShell>
   );
 }
