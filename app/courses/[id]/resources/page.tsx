@@ -92,55 +92,6 @@ export default function CourseResourcesPage() {
     <CourseShell title={course?.title || "课程资源"} subtitle="课程资源集中管理。" courseId={courseId} actions={<RefreshButton onClick={() => void loadData()} loading={busy} />}>
       {error ? <Alert style={{ marginBottom: 12 }} type="error" message={error} showIcon /> : null}
 
-      {managementMode ? (
-        <Card title={<Space><PlusCircleOutlined />上传资源</Space>} style={{ marginBottom: 16 }}>
-          <Form layout="vertical" onSubmitCapture={onCreateResource}>
-            <Form.Item label="资源名称" required>
-              <Input value={resourceName} onChange={(event) => setResourceName(event.target.value)} required />
-            </Form.Item>
-            <Row gutter={12}>
-              <Col xs={24} md={12}>
-                <Form.Item label="资源类型" required>
-                  <Select
-                    value={resourceType}
-                    options={[
-                      { label: "文件", value: "FILE" },
-                      { label: "视频链接", value: "VIDEO" },
-                      { label: "参考链接", value: "LINK" },
-                    ]}
-                    onChange={(value) => setResourceType(value)}
-                  />
-                </Form.Item>
-              </Col>
-              <Col xs={24} md={12}>
-                <Form.Item label="分类">
-                  <Input value={resourceCategory} onChange={(event) => setResourceCategory(event.target.value)} placeholder="如：课件/视频/参考资料" />
-                </Form.Item>
-              </Col>
-            </Row>
-            {resourceType === "FILE" ? (
-              <Form.Item label="上传文件" required>
-                <Input type="file" onChange={(event) => setResourceFile(event.target.files?.[0] ?? null)} required />
-              </Form.Item>
-            ) : (
-              <Form.Item label="外部链接" required>
-                <Input value={resourceExternalUrl} onChange={(event) => setResourceExternalUrl(event.target.value)} placeholder="https://" required />
-              </Form.Item>
-            )}
-            <Button type="primary" htmlType="submit" loading={submitting}>
-              上传资源
-            </Button>
-          </Form>
-        </Card>
-      ) : isTeacher ? (
-        <Alert
-          style={{ marginBottom: 16 }}
-          type="info"
-          showIcon
-          message="资源上传已归并到管理"
-          description={<Link href={`/courses/${courseId}/manage`}>进入管理页上传资源</Link>}
-        />
-      ) : null}
 
       <Card title={<Space><FileOutlined />课程资源</Space>} loading={busy}>
         {resources.length ? (
