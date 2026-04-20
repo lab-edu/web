@@ -27,10 +27,22 @@ export const learningApi = {
       body: JSON.stringify(payload),
     });
   },
+  reorderUnits(courseId: string, orderedUnitIds: string[]) {
+    return apiRequest<CourseLearningDetail>(`/courses/${courseId}/learning/units/order`, {
+      method: "PATCH",
+      body: JSON.stringify({ orderedUnitIds }),
+    });
+  },
   createPoint(courseId: string, unitId: string, payload: { title: string; summary?: string; estimatedMinutes?: number; sortOrder?: number }) {
     return apiRequest<CourseLearningPoint>(`/courses/${courseId}/learning/units/${unitId}/points`, {
       method: "POST",
       body: JSON.stringify(payload),
+    });
+  },
+  reorderPoints(courseId: string, unitId: string, orderedPointIds: string[]) {
+    return apiRequest<CourseLearningDetail>(`/courses/${courseId}/learning/units/${unitId}/points/order`, {
+      method: "PATCH",
+      body: JSON.stringify({ orderedPointIds }),
     });
   },
   createTask(

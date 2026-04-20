@@ -1,8 +1,7 @@
 "use client";
 
-import Link from "next/link";
 import { useParams } from "next/navigation";
-import { FormEvent, useEffect, useMemo, useState } from "react";
+import { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
 import {
   Alert,
   Button,
@@ -22,8 +21,8 @@ import {
   Tag,
   Typography,
 } from "antd";
-import { BookOutlined, BulbOutlined, FileOutlined, ReloadOutlined } from "@ant-design/icons";
-import { PlatformShell } from "@/components/platform-shell";
+import { BookOutlined, BulbOutlined, FileOutlined, HolderOutlined, PlusOutlined, ReloadOutlined } from "@ant-design/icons";
+import { CourseShell } from "@/components/course-shell";
 import { useAuth } from "@/lib/auth/auth-context";
 import { learningApi } from "@/lib/api/learning";
 import type {
@@ -58,6 +57,33 @@ const questionTypeOptions: Array<{ label: string; value: LearningQuestionType }>
   { label: "简答题", value: "SHORT_ANSWER" },
 ];
 
+type DragNode = {
+  level: "unit" | "point" | "task";
+  id: string;
+};
+
+const sortByOrder = <T extends { sortOrder: number }>(items: T[]) => [...items].sort((left, right) => left.sortOrder - right.sortOrder);
+
+const moveItem = (items: string[], fromId: string, toId: string) => {
+  const fromIndex = items.indexOf(fromId);
+  const toIndex = items.indexOf(toId);
+  if (fromIndex < 0 || toIndex < 0 || fromIndex === toIndex) {
+    return items;
+  }
+
+  const nextItems = [...items];
+  const [moving] = nextItems.splice(fromIndex, 1);
+  nextItems.splice(toIndex, 0, moving);
+  return nextItems;
+};
+
+const nextSortOrder = <T extends { sortOrder: number }>(items: T[]) => {
+  if (!items.length) {
+    return 10;
+  }
+  return Math.max(...items.map((item) => item.sortOrder)) + 10;
+};
+
 export default function CourseLearningPage() {
   const params = useParams<{ id: string }>();
   const courseId = params.id;
@@ -76,13 +102,11 @@ export default function CourseLearningPage() {
 
   const [unitTitle, setUnitTitle] = useState("");
   const [unitDescription, setUnitDescription] = useState("");
-  const [unitSortOrder, setUnitSortOrder] = useState<number | null>(null);
   const [unitPublished, setUnitPublished] = useState(true);
 
   const [pointTitle, setPointTitle] = useState("");
   const [pointSummary, setPointSummary] = useState("");
   const [pointEstimatedMinutes, setPointEstimatedMinutes] = useState<number | null>(null);
-  const [pointSortOrder, setPointSortOrder] = useState<number | null>(null);
 
   const [taskTitle, setTaskTitle] = useState("");
   const [taskDescription, setTaskDescription] = useState("");
@@ -101,10 +125,12 @@ export default function CourseLearningPage() {
   const [notifyBeforeDue24h, setNotifyBeforeDue24h] = useState(true);
   const [notifyOnDue, setNotifyOnDue] = useState(true);
   const [taskRequired, setTaskRequired] = useState(true);
-  const [taskSortOrder, setTaskSortOrder] = useState<number | null>(null);
   const [taskFile, setTaskFile] = useState<File | null>(null);
   const [taskSubmitting, setTaskSubmitting] = useState(false);
   const [reorderBusyTaskId, setReorderBusyTaskId] = useState<string | null>(null);
+  const [reorderBusyUnitId, setReorderBusyUnitId] = useState<string | null>(null);
+  const [reorderBusyPointId, setReorderBusyPointId] = useState<string | null>(null);
+  const [draggingNode, setDraggingNode] = useState<DragNode | null>(null);
 
   const [answerText, setAnswerText] = useState("");
   const [answerFile, setAnswerFile] = useState<File | null>(null);
@@ -113,7 +139,7 @@ export default function CourseLearningPage() {
 
   const isTeacher = user?.role === "TEACHER";
 
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     setBusy(true);
     setError(null);
     try {
@@ -130,13 +156,13 @@ export default function CourseLearningPage() {
     } finally {
       setBusy(false);
     }
-  };
+  }, [courseId]);
 
   useEffect(() => {
     if (!loading && user) {
       void loadData();
     }
-  }, [loading, user, courseId]);
+  }, [loading, user, loadData]);
 
   useEffect(() => {
     if (!detail?.units?.length) {
@@ -268,12 +294,11 @@ export default function CourseLearningPage() {
       await learningApi.createUnit(courseId, {
         title: unitTitle,
         description: unitDescription,
-        sortOrder: unitSortOrder ?? undefined,
+        sortOrder: nextSortOrder(detail?.units ?? []),
         published: unitPublished,
       });
       setUnitTitle("");
       setUnitDescription("");
-      setUnitSortOrder(null);
       setUnitPublished(true);
       await loadData();
     } catch (createError) {
@@ -283,22 +308,21 @@ export default function CourseLearningPage() {
 
   const createPoint = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    if (!selectedUnitId) {
-      setError("请先选择一个学习单元");
+    if (!selectedUnit) {
+      setError("请先在预览中选择一个学习单元");
       return;
     }
     setError(null);
     try {
-      await learningApi.createPoint(courseId, selectedUnitId, {
+      await learningApi.createPoint(courseId, selectedUnit.id, {
         title: pointTitle,
         summary: pointSummary,
         estimatedMinutes: pointEstimatedMinutes ?? undefined,
-        sortOrder: pointSortOrder ?? undefined,
+        sortOrder: nextSortOrder(selectedUnit.points),
       });
       setPointTitle("");
       setPointSummary("");
       setPointEstimatedMinutes(null);
-      setPointSortOrder(null);
       await loadData();
     } catch (createError) {
       setError(createError instanceof Error ? createError.message : "创建知识点失败");
@@ -307,15 +331,15 @@ export default function CourseLearningPage() {
 
   const createTask = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    if (!selectedPointId) {
-      setError("请先选择一个知识点");
+    if (!selectedPoint) {
+      setError("请先在预览中选择一个知识点");
       return;
     }
 
     setTaskSubmitting(true);
     setError(null);
     try {
-      await learningApi.createTask(courseId, selectedPointId, {
+      await learningApi.createTask(courseId, selectedPoint.id, {
         title: taskTitle,
         description: taskDescription,
         taskType,
@@ -333,7 +357,7 @@ export default function CourseLearningPage() {
         notifyBeforeDue24h,
         notifyOnDue,
         required: taskRequired,
-        sortOrder: taskSortOrder ?? undefined,
+        sortOrder: nextSortOrder(selectedPoint.tasks),
         file: taskType === "MEDIA" && materialType === "FILE" ? taskFile ?? undefined : undefined,
       });
       setTaskTitle("");
@@ -350,7 +374,6 @@ export default function CourseLearningPage() {
       setNotifyBeforeDue24h(true);
       setNotifyOnDue(true);
       setTaskRequired(true);
-      setTaskSortOrder(null);
       setTaskFile(null);
       await loadData();
     } catch (createError) {
@@ -360,21 +383,18 @@ export default function CourseLearningPage() {
     }
   };
 
-  const reorderTask = async (pointId: string, taskId: string, direction: "up" | "down") => {
+  const reorderTask = async (pointId: string, taskId: string, targetTaskId: string) => {
     const targetPoint = detail?.units
       .flatMap((unit) => unit.points)
       .find((point) => point.id === pointId);
     if (!targetPoint) {
       return;
     }
-    const index = targetPoint.tasks.findIndex((task) => task.id === taskId);
-    const swapIndex = direction === "up" ? index - 1 : index + 1;
-    if (index < 0 || swapIndex < 0 || swapIndex >= targetPoint.tasks.length) {
+    if (taskId === targetTaskId) {
       return;
     }
 
-    const reorderedIds = targetPoint.tasks.map((task) => task.id);
-    [reorderedIds[index], reorderedIds[swapIndex]] = [reorderedIds[swapIndex], reorderedIds[index]];
+    const reorderedIds = moveItem(targetPoint.tasks.map((task) => task.id), taskId, targetTaskId);
 
     setReorderBusyTaskId(taskId);
     setError(null);
@@ -385,6 +405,43 @@ export default function CourseLearningPage() {
       setError(reorderError instanceof Error ? reorderError.message : "任务重排失败");
     } finally {
       setReorderBusyTaskId(null);
+    }
+  };
+
+  const reorderUnits = async (unitId: string, targetUnitId: string) => {
+    if (!detail?.units?.length || unitId === targetUnitId) {
+      return;
+    }
+
+    const orderedUnitIds = moveItem(detail.units.map((unit) => unit.id), unitId, targetUnitId);
+    setReorderBusyUnitId(unitId);
+    setError(null);
+    try {
+      await learningApi.reorderUnits(courseId, orderedUnitIds);
+      await loadData();
+    } catch (reorderError) {
+      setError(reorderError instanceof Error ? reorderError.message : "单元重排失败");
+    } finally {
+      setReorderBusyUnitId(null);
+    }
+  };
+
+  const reorderPoints = async (unitId: string, pointId: string, targetPointId: string) => {
+    const targetUnit = detail?.units.find((unit) => unit.id === unitId);
+    if (!targetUnit || pointId === targetPointId) {
+      return;
+    }
+
+    const orderedPointIds = moveItem(targetUnit.points.map((point) => point.id), pointId, targetPointId);
+    setReorderBusyPointId(pointId);
+    setError(null);
+    try {
+      await learningApi.reorderPoints(courseId, unitId, orderedPointIds);
+      await loadData();
+    } catch (reorderError) {
+      setError(reorderError instanceof Error ? reorderError.message : "知识点重排失败");
+    } finally {
+      setReorderBusyPointId(null);
     }
   };
 
@@ -450,22 +507,11 @@ export default function CourseLearningPage() {
   }
 
   return (
-    <PlatformShell
+    <CourseShell
+      courseId={courseId}
       title={detail?.courseTitle || "课程学习"}
       subtitle="教师组织单元、知识点与任务，学生在同一界面完成学习、提交与批阅查看。"
-      actions={(
-        <Space>
-          <Link href="/homeworks">
-            <Button>作业中心</Button>
-          </Link>
-          <Link href={`/courses/${courseId}`}>
-            <Button>返回课程</Button>
-          </Link>
-          <Button icon={<ReloadOutlined />} onClick={() => void loadData()}>
-            刷新
-          </Button>
-        </Space>
-      )}
+      actions={<Button icon={<ReloadOutlined />} onClick={() => void loadData()}>刷新</Button>}
     >
       {error ? <Alert style={{ marginBottom: 12 }} type="error" message={error} showIcon /> : null}
 
@@ -509,11 +555,6 @@ export default function CourseLearningPage() {
                 </Form.Item>
                 <Row gutter={12}>
                   <Col xs={24} md={8}>
-                    <Form.Item label="排序">
-                      <InputNumber value={unitSortOrder} min={0} onChange={(value) => setUnitSortOrder(typeof value === "number" ? value : null)} style={{ width: "100%" }} />
-                    </Form.Item>
-                  </Col>
-                  <Col xs={24} md={8}>
                     <Form.Item label="发布状态">
                       <Select
                         value={unitPublished ? "published" : "draft"}
@@ -538,13 +579,11 @@ export default function CourseLearningPage() {
               <Divider />
 
               <Form layout="vertical" onSubmitCapture={createPoint}>
-                <Form.Item label="选择单元" required>
-                  <Select
-                    value={selectedUnitId ?? undefined}
-                    placeholder="先选择一个单元"
-                    options={(detail?.units ?? []).map((unit) => ({ label: unit.title, value: unit.id }))}
-                    onChange={(value) => setSelectedUnitId(value)}
-                  />
+                <Form.Item label="当前单元" required>
+                  <Space wrap>
+                    <Tag color="blue">{selectedUnit?.title ?? "请先在预览中选择一个学习单元"}</Tag>
+                    {selectedUnit?.published ? <Tag color="green">已发布</Tag> : <Tag>草稿</Tag>}
+                  </Space>
                 </Form.Item>
                 <Form.Item label="知识点标题" required>
                   <Input value={pointTitle} onChange={(event) => setPointTitle(event.target.value)} required />
@@ -556,11 +595,6 @@ export default function CourseLearningPage() {
                   <Col xs={24} md={8}>
                     <Form.Item label="预计时长（分钟）">
                       <InputNumber value={pointEstimatedMinutes} min={0} onChange={(value) => setPointEstimatedMinutes(typeof value === "number" ? value : null)} style={{ width: "100%" }} />
-                    </Form.Item>
-                  </Col>
-                  <Col xs={24} md={8}>
-                    <Form.Item label="排序">
-                      <InputNumber value={pointSortOrder} min={0} onChange={(value) => setPointSortOrder(typeof value === "number" ? value : null)} style={{ width: "100%" }} />
                     </Form.Item>
                   </Col>
                   <Col xs={24} md={8}>
@@ -576,13 +610,11 @@ export default function CourseLearningPage() {
               <Divider />
 
               <Form layout="vertical" onSubmitCapture={createTask}>
-                <Form.Item label="选择知识点" required>
-                  <Select
-                    value={selectedPointId ?? undefined}
-                    placeholder="先选择一个知识点"
-                    options={(selectedUnit?.points ?? []).map((point) => ({ label: point.title, value: point.id }))}
-                    onChange={(value) => setSelectedPointId(value)}
-                  />
+                <Form.Item label="当前知识点" required>
+                  <Space wrap>
+                    <Tag color="blue">{selectedPoint?.title ?? "请先在预览中选择一个知识点"}</Tag>
+                    <Tag>{selectedUnit?.title ?? "无所属单元"}</Tag>
+                  </Space>
                 </Form.Item>
                 <Form.Item label="任务标题" required>
                   <Input value={taskTitle} onChange={(event) => setTaskTitle(event.target.value)} required />
@@ -604,11 +636,6 @@ export default function CourseLearningPage() {
                   <Col xs={24} md={4}>
                     <Form.Item label="分值">
                       <InputNumber value={taskMaxScore} min={0} step={1} onChange={(value) => setTaskMaxScore(typeof value === "number" ? value : null)} style={{ width: "100%" }} />
-                    </Form.Item>
-                  </Col>
-                  <Col xs={24} md={4}>
-                    <Form.Item label="排序">
-                      <InputNumber value={taskSortOrder} min={0} onChange={(value) => setTaskSortOrder(typeof value === "number" ? value : null)} style={{ width: "100%" }} />
                     </Form.Item>
                   </Col>
                 </Row>
@@ -710,90 +737,158 @@ export default function CourseLearningPage() {
           ) : null}
 
           <Card title={<Space><BookOutlined />课程结构</Space>} loading={busy}>
-            {detail?.units?.length ? (
-              <Collapse
-                items={detail.units.map((unit) => ({
-                  key: unit.id,
-                  label: (
-                    <Space wrap>
-                      <span>{unit.title}</span>
-                      <Tag color={unit.published ? "green" : "default"}>{unit.published ? "已发布" : "草稿"}</Tag>
-                      <Tag>排序 {unit.sortOrder}</Tag>
-                    </Space>
-                  ),
-                  children: (
-                    <Space direction="vertical" size={16} style={{ width: "100%" }}>
-                      {unit.description ? <Typography.Paragraph type="secondary">{unit.description}</Typography.Paragraph> : null}
-                      {unit.points.length ? unit.points.map((point) => (
-                        <Card
-                          key={point.id}
-                          size="small"
-                          title={(
-                            <Space wrap>
-                              <BulbOutlined />
-                              <span>{point.title}</span>
-                              {point.estimatedMinutes ? <Tag color="cyan">预计 {point.estimatedMinutes} 分钟</Tag> : null}
-                            </Space>
-                          )}
-                          extra={<Button type={selectedPointId === point.id ? "primary" : "default"} onClick={() => setSelectedPointId(point.id)}>查看任务</Button>}
+            <Space direction="vertical" size={16} style={{ width: "100%" }}>
+              <Typography.Text type="secondary">
+                拖拽标题栏调整顺序，右侧按钮会把当前节点带入创建表单。
+              </Typography.Text>
+              {detail?.units?.length ? (
+                <Collapse
+                  ghost
+                  defaultActiveKey={selectedUnitId ? [selectedUnitId] : undefined}
+                  items={sortByOrder(detail.units).map((unit) => ({
+                    key: unit.id,
+                    label: (
+                      <Space wrap style={{ width: "100%", cursor: isTeacher ? "grab" : "default", opacity: reorderBusyUnitId === unit.id ? 0.65 : 1 }}>
+                        <span
+                          draggable={isTeacher}
+                          onDragStart={() => setDraggingNode({ level: "unit", id: unit.id })}
+                          onDragEnd={() => setDraggingNode(null)}
+                          onDragOver={(event) => {
+                            if (!isTeacher) {
+                              return;
+                            }
+                            event.preventDefault();
+                          }}
+                          onDrop={(event) => {
+                            if (!isTeacher || draggingNode?.level !== "unit") {
+                              return;
+                            }
+                            event.preventDefault();
+                            void reorderUnits(draggingNode.id, unit.id);
+                            setDraggingNode(null);
+                          }}
                         >
-                          {point.summary ? <Typography.Paragraph type="secondary">{point.summary}</Typography.Paragraph> : null}
-                          {point.tasks.length ? (
-                            <List
-                              dataSource={point.tasks}
-                              renderItem={(task) => (
-                                <List.Item
-                                  actions={[
-                                    <Button key="select" type={selectedTaskId === task.id ? "primary" : "default"} onClick={() => setSelectedTaskId(task.id)}>
-                                      打开
-                                    </Button>,
-                                  ]}
+                          <HolderOutlined /> {unit.title}
+                        </span>
+                        <Tag color={unit.published ? "green" : "default"}>{unit.published ? "已发布" : "草稿"}</Tag>
+                        <Tag>排序 {unit.sortOrder}</Tag>
+                      </Space>
+                    ),
+                    extra: isTeacher ? (
+                      <Space onClick={(event) => event.stopPropagation()}>
+                        <Button size="small" icon={<PlusOutlined />} onClick={() => setSelectedUnitId(unit.id)}>
+                          知识点
+                        </Button>
+                      </Space>
+                    ) : undefined,
+                    children: (
+                      <Space direction="vertical" size={16} style={{ width: "100%" }}>
+                        {unit.description ? <Typography.Text type="secondary">{unit.description}</Typography.Text> : null}
+                        {unit.points.length ? sortByOrder(unit.points).map((point, pointIndex) => (
+                          <div
+                            key={point.id}
+                            style={{
+                              paddingTop: 12,
+                              marginTop: pointIndex === 0 ? 0 : 12,
+                              borderTop: pointIndex === 0 ? "none" : "1px solid #f0f0f0",
+                              opacity: reorderBusyPointId === point.id ? 0.65 : 1,
+                            }}
+                          >
+                            <Space wrap style={{ width: "100%", justifyContent: "space-between" }}>
+                              <Space wrap>
+                                <span
+                                  draggable={isTeacher}
+                                  onDragStart={() => setDraggingNode({ level: "point", id: point.id })}
+                                  onDragEnd={() => setDraggingNode(null)}
+                                  onDragOver={(event) => {
+                                    if (!isTeacher) {
+                                      return;
+                                    }
+                                    event.preventDefault();
+                                  }}
+                                  onDrop={(event) => {
+                                    if (!isTeacher || draggingNode?.level !== "point") {
+                                      return;
+                                    }
+                                    event.preventDefault();
+                                    void reorderPoints(unit.id, draggingNode.id, point.id);
+                                    setDraggingNode(null);
+                                  }}
                                 >
-                                  <List.Item.Meta
-                                    title={(
-                                      <Space wrap>
-                                        <FileOutlined />
-                                        <span>{task.title}</span>
-                                        <Tag color={task.taskKind === "HOMEWORK" ? "gold" : "default"}>{task.taskKind === "HOMEWORK" ? "作业" : "学习"}</Tag>
-                                        <Tag>{task.taskType === "MEDIA" ? "媒体学习" : "随堂测试"}</Tag>
-                                        <Tag>分值 {task.maxScore}</Tag>
-                                      </Space>
-                                    )}
-                                    description={task.description || "暂无说明"}
-                                  />
-                                  {isTeacher ? (
-                                    <Space>
-                                      <Button
-                                        size="small"
-                                        disabled={reorderBusyTaskId === task.id}
-                                        onClick={() => void reorderTask(point.id, task.id, "up")}
-                                      >
-                                        上移
-                                      </Button>
-                                      <Button
-                                        size="small"
-                                        disabled={reorderBusyTaskId === task.id}
-                                        onClick={() => void reorderTask(point.id, task.id, "down")}
-                                      >
-                                        下移
-                                      </Button>
+                                  <BulbOutlined /> 知识点{pointIndex + 1}：{point.title}
+                                </span>
+                                {point.estimatedMinutes ? <Tag color="cyan">预计 {point.estimatedMinutes} 分钟</Tag> : null}
+                              </Space>
+                              <Space>
+                                {isTeacher ? (
+                                  <Button size="small" icon={<PlusOutlined />} onClick={() => setSelectedPointId(point.id)}>
+                                    任务
+                                  </Button>
+                                ) : null}
+                                <Button type={selectedPointId === point.id ? "primary" : "default"} size="small" onClick={() => setSelectedPointId(point.id)}>
+                                  查看任务
+                                </Button>
+                              </Space>
+                            </Space>
+                            {point.summary ? <Typography.Text type="secondary">{point.summary}</Typography.Text> : null}
+                            {point.tasks.length ? (
+                              <Space direction="vertical" size={10} style={{ width: "100%", marginTop: 10 }}>
+                                {sortByOrder(point.tasks).map((task, taskIndex) => (
+                                  <div
+                                    key={task.id}
+                                    draggable={isTeacher}
+                                    onDragStart={() => setDraggingNode({ level: "task", id: task.id })}
+                                    onDragEnd={() => setDraggingNode(null)}
+                                    onDragOver={(event) => {
+                                      if (!isTeacher) {
+                                        return;
+                                      }
+                                      event.preventDefault();
+                                    }}
+                                    onDrop={(event) => {
+                                      if (!isTeacher || draggingNode?.level !== "task") {
+                                        return;
+                                      }
+                                      event.preventDefault();
+                                      void reorderTask(point.id, draggingNode.id, task.id);
+                                      setDraggingNode(null);
+                                    }}
+                                    style={{
+                                      display: "flex",
+                                      alignItems: "center",
+                                      gap: 10,
+                                      padding: "6px 0 6px 18px",
+                                      borderTop: taskIndex === 0 ? "none" : "1px dashed #f0f0f0",
+                                      cursor: isTeacher ? "grab" : "default",
+                                      opacity: reorderBusyTaskId === task.id ? 0.65 : 1,
+                                    }}
+                                  >
+                                    <span style={{ color: "#52c41a" }}><FileOutlined /></span>
+                                    <Space wrap size={6} style={{ flex: 1 }}>
+                                      <span>{task.title}</span>
+                                      <Tag color={task.taskKind === "HOMEWORK" ? "gold" : "default"}>{task.taskKind === "HOMEWORK" ? "作业" : "学习"}</Tag>
+                                      <Tag>{task.taskType === "MEDIA" ? "媒体" : "测验"}</Tag>
+                                      <Tag>分值 {task.maxScore}</Tag>
                                     </Space>
-                                  ) : null}
-                                </List.Item>
-                              )}
-                            />
-                          ) : (
-                            <Empty description="该知识点暂无任务" />
-                          )}
-                        </Card>
-                      )) : <Empty description="该单元暂无知识点" />}
-                    </Space>
-                  ),
-                }))}
-              />
-            ) : (
-              <Empty description="当前课程还没有学习结构" />
-            )}
+                                    <Button size="small" type={selectedTaskId === task.id ? "primary" : "default"} onClick={() => setSelectedTaskId(task.id)}>
+                                      打开
+                                    </Button>
+                                  </div>
+                                ))}
+                              </Space>
+                            ) : (
+                              <Empty description="该知识点暂无任务" />
+                            )}
+                          </div>
+                        )) : <Empty description="该单元暂无知识点" />}
+                      </Space>
+                    ),
+                  }))}
+                />
+              ) : (
+                <Empty description="当前课程还没有学习结构" />
+              )}
+            </Space>
           </Card>
         </Col>
 
@@ -850,7 +945,8 @@ export default function CourseLearningPage() {
           </Card>
 
           {selectedTask && !isTeacher ? (
-            <Card title="提交答卷" style={{ marginBottom: 16 }}>
+            <div id="homework" style={{ marginBottom: 16, scrollMarginTop: 92 }}>
+              <Card title="提交答卷">
               <Form layout="vertical" onSubmitCapture={submitTask}>
                 <Form.Item label="作答文本">
                   <Input.TextArea value={answerText} rows={5} onChange={(event) => setAnswerText(event.target.value)} placeholder="填写你的答案或学习反馈" />
@@ -872,11 +968,13 @@ export default function CourseLearningPage() {
                   {latestSubmission.feedback ? <Typography.Text>评语：{latestSubmission.feedback}</Typography.Text> : null}
                 </Space>
               ) : <Empty description="尚无提交" />}
-            </Card>
+              </Card>
+            </div>
           ) : null}
 
           {selectedTask && isTeacher ? (
-            <Card title="答卷批阅" style={{ marginBottom: 16 }}>
+            <div id="homework" style={{ marginBottom: 16, scrollMarginTop: 92 }}>
+              <Card title="答卷批阅">
               {taskBusy ? (
                 <Spin />
               ) : taskSubmissions.length ? (
@@ -935,7 +1033,8 @@ export default function CourseLearningPage() {
               ) : (
                 <Empty description="该任务暂无提交" />
               )}
-            </Card>
+              </Card>
+            </div>
           ) : null}
 
           <Card title="学习汇总">
@@ -983,6 +1082,6 @@ export default function CourseLearningPage() {
           </Card>
         </Col>
       </Row>
-    </PlatformShell>
+    </CourseShell>
   );
 }
