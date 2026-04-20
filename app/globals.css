@@ -88,6 +88,10 @@ pre {
   color: #16479f;
 }
 
+.course-brand {
+  color: #0f766e;
+}
+
 .platform-header {
   background: #ffffff !important;
   border-bottom: 1px solid var(--border);
@@ -114,6 +118,117 @@ pre {
   padding: 22px;
 }
 
+.learning-structure-card .ant-card-body {
+  background:
+    radial-gradient(circle at top right, rgba(20, 179, 161, 0.08), transparent 28%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.92), rgba(248, 250, 255, 0.98));
+}
+
+.learning-structure-summary {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.learning-structure-summary-item {
+  border: 1px solid rgba(22, 71, 159, 0.08);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.82);
+  padding: 12px 14px;
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  box-shadow: 0 10px 24px rgba(16, 30, 58, 0.04);
+}
+
+.learning-structure-summary-item span {
+  color: var(--muted);
+  font-size: 12px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.learning-structure-summary-item strong {
+  color: var(--ink);
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.learning-structure-collapse .ant-collapse-item {
+  border: 1px solid rgba(22, 71, 159, 0.08) !important;
+  border-radius: 18px !important;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.86);
+  box-shadow: 0 12px 30px rgba(16, 30, 58, 0.04);
+  margin-bottom: 12px;
+}
+
+.learning-structure-collapse .ant-collapse-header {
+  align-items: center !important;
+  padding: 18px 18px 16px !important;
+}
+
+.learning-structure-unit-label {
+  min-height: 40px;
+}
+
+.learning-structure-unit-title,
+.learning-structure-point-title {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  max-width: 100%;
+  color: var(--ink);
+  font-weight: 650;
+}
+
+.learning-structure-unit-title span,
+.learning-structure-point-title span,
+.learning-structure-point-title strong,
+.learning-structure-task-title {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.learning-structure-point {
+  border-radius: 14px;
+  background: rgba(245, 248, 253, 0.9);
+  padding-left: 14px;
+  padding-right: 14px;
+}
+
+.learning-structure-point-head {
+  gap: 12px;
+}
+
+.learning-structure-handle {
+  color: #7d8ca8;
+  font-size: 14px;
+}
+
+.learning-structure-task {
+  border-radius: 12px;
+  padding-right: 12px;
+}
+
+.learning-structure-task-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 999px;
+  background: rgba(82, 196, 26, 0.12);
+  color: #2f9e44;
+  flex: 0 0 auto;
+}
+
+.learning-structure-task-title {
+  color: var(--ink);
+  font-weight: 600;
+}
+
 .muted {
   color: var(--muted);
 }
@@ -132,5 +247,9 @@ pre {
 
   .platform-content {
     padding: 14px;
+  }
+
+  .learning-structure-summary {
+    grid-template-columns: 1fr;
   }
 }

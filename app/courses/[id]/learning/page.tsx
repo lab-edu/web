@@ -218,6 +218,14 @@ export default function CourseLearningPage() {
     [selectedPoint, selectedTaskId],
   );
 
+  const structureStats = useMemo(() => {
+    const units = detail?.units ?? [];
+    const points = units.reduce((count, unit) => count + (unit.points?.length ?? 0), 0);
+    const tasks = units.reduce((count, unit) => count + unit.points.reduce((pointCount, point) => pointCount + (point.tasks?.length ?? 0), 0), 0);
+
+    return { units: units.length, points, tasks };
+  }, [detail]);
+
   useEffect(() => {
     if (!selectedTaskId) {
       setTaskSubmissions([]);
@@ -736,7 +744,7 @@ export default function CourseLearningPage() {
             </Card>
           ) : null}
 
-          <Card title={<Space><BookOutlined />课程结构</Space>} loading={busy}>
+          <Card className="learning-structure-card" title={<Space><BookOutlined />课程结构</Space>} loading={busy}>
             <Space direction="vertical" size={16} style={{ width: "100%" }}>
               <Typography.Text type="secondary">
                 {isTeacher
@@ -744,13 +752,34 @@ export default function CourseLearningPage() {
                   : "课程内容按固定顺序展示，点击节点可以查看对应内容。"}
               </Typography.Text>
               {detail?.units?.length ? (
+                <div className="learning-structure-summary">
+                  <div className="learning-structure-summary-item">
+                    <span>单元</span>
+                    <strong>{structureStats.units}</strong>
+                  </div>
+                  <div className="learning-structure-summary-item">
+                    <span>知识点</span>
+                    <strong>{structureStats.points}</strong>
+                  </div>
+                  <div className="learning-structure-summary-item">
+                    <span>任务</span>
+                    <strong>{structureStats.tasks}</strong>
+                  </div>
+                </div>
+              ) : null}
+              {detail?.units?.length ? (
                 <Collapse
+                  className="learning-structure-collapse"
                   ghost
                   defaultActiveKey={selectedUnitId ? [selectedUnitId] : undefined}
                   items={sortByOrder(detail.units).map((unit) => ({
                     key: unit.id,
                     label: (
-                      <Space wrap style={{ width: "100%", cursor: isTeacher ? "grab" : "default", opacity: reorderBusyUnitId === unit.id ? 0.65 : 1 }}>
+                      <Space
+                        wrap
+                        className="learning-structure-unit-label"
+                        style={{ width: "100%", cursor: isTeacher ? "grab" : "default", opacity: reorderBusyUnitId === unit.id ? 0.65 : 1 }}
+                      >
                         <span
                           draggable={isTeacher}
                           onDragStart={isTeacher ? () => setDraggingNode({ level: "unit", id: unit.id }) : undefined}
@@ -769,10 +798,12 @@ export default function CourseLearningPage() {
                             void reorderUnits(draggingNode.id, unit.id);
                             setDraggingNode(null);
                           }}
+                          className="learning-structure-unit-title"
                         >
-                          {isTeacher ? <HolderOutlined /> : null} {unit.title}
+                          {isTeacher ? <HolderOutlined className="learning-structure-handle" /> : null}
+                          <span>{unit.title}</span>
                         </span>
-                        <Tag color={unit.published ? "green" : "default"}>{unit.published ? "已发布" : "草稿"}</Tag>
+                        {isTeacher ? <Tag color={unit.published ? "green" : "default"}>{unit.published ? "已发布" : "草稿"}</Tag> : null}
                         {isTeacher ? <Tag>排序 {unit.sortOrder}</Tag> : null}
                       </Space>
                     ),
@@ -789,14 +820,15 @@ export default function CourseLearningPage() {
                         {unit.points.length ? sortByOrder(unit.points).map((point, pointIndex) => (
                           <div
                             key={point.id}
+                            className="learning-structure-point"
                             style={{
                               paddingTop: 12,
                               marginTop: pointIndex === 0 ? 0 : 12,
-                              borderTop: pointIndex === 0 ? "none" : "1px solid #f0f0f0",
+                              borderTop: pointIndex === 0 ? "none" : "1px solid rgba(22, 71, 159, 0.08)",
                               opacity: reorderBusyPointId === point.id ? 0.65 : 1,
                             }}
                           >
-                            <Space wrap style={{ width: "100%", justifyContent: "space-between" }}>
+                            <Space wrap className="learning-structure-point-head" style={{ width: "100%", justifyContent: "space-between" }}>
                               <Space wrap>
                                 <span
                                   draggable={isTeacher}
@@ -816,8 +848,11 @@ export default function CourseLearningPage() {
                                     void reorderPoints(unit.id, draggingNode.id, point.id);
                                     setDraggingNode(null);
                                   }}
+                                  className="learning-structure-point-title"
                                 >
-                                  {isTeacher ? <BulbOutlined /> : null} 知识点{pointIndex + 1}：{point.title}
+                                  {isTeacher ? <BulbOutlined className="learning-structure-handle" /> : null}
+                                  <span>知识点 {pointIndex + 1}</span>
+                                  <strong>{point.title}</strong>
                                 </span>
                                 {point.estimatedMinutes ? <Tag color="cyan">预计 {point.estimatedMinutes} 分钟</Tag> : null}
                               </Space>
@@ -838,6 +873,7 @@ export default function CourseLearningPage() {
                                 {sortByOrder(point.tasks).map((task, taskIndex) => (
                                   <div
                                     key={task.id}
+                                    className="learning-structure-task"
                                     draggable={isTeacher}
                                     onDragStart={isTeacher ? () => setDraggingNode({ level: "task", id: task.id }) : undefined}
                                     onDragEnd={isTeacher ? () => setDraggingNode(null) : undefined}
@@ -859,15 +895,15 @@ export default function CourseLearningPage() {
                                       display: "flex",
                                       alignItems: "center",
                                       gap: 10,
-                                      padding: "6px 0 6px 18px",
-                                      borderTop: taskIndex === 0 ? "none" : "1px dashed #f0f0f0",
+                                      padding: "8px 0 8px 14px",
+                                      borderTop: taskIndex === 0 ? "none" : "1px dashed rgba(22, 71, 159, 0.08)",
                                       cursor: isTeacher ? "grab" : "default",
                                       opacity: reorderBusyTaskId === task.id ? 0.65 : 1,
                                     }}
                                   >
-                                    <span style={{ color: "#52c41a" }}><FileOutlined /></span>
+                                    <span className="learning-structure-task-icon"><FileOutlined /></span>
                                     <Space wrap size={6} style={{ flex: 1 }}>
-                                      <span>{task.title}</span>
+                                      <span className="learning-structure-task-title">{task.title}</span>
                                       <Tag color={task.taskKind === "HOMEWORK" ? "gold" : "default"}>{task.taskKind === "HOMEWORK" ? "作业" : "学习"}</Tag>
                                       <Tag>{task.taskType === "MEDIA" ? "媒体" : "测验"}</Tag>
                                       <Tag>分值 {task.maxScore}</Tag>
