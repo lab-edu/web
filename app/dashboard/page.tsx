@@ -11,6 +11,7 @@ import { coursesApi } from "@/lib/api/courses";
 import { learningApi } from "@/lib/api/learning";
 import type { CourseSummary, CourseHomeworkItem } from "@/lib/api/types";
 import { useAuth } from "@/lib/auth/auth-context";
+import { RichTextRenderer } from "@/components/rich-text-renderer";
 
 export default function DashboardPage() {
   const { user, loading } = useAuth();
@@ -101,7 +102,7 @@ export default function DashboardPage() {
                       </Link>
                     )}
                   >
-                    <Typography.Text type="secondary">{course.description || "暂无描述"}</Typography.Text>
+                    <RichTextRenderer html={course.description} emptyText="暂无描述" className="muted" />
                   </Card>
                 ))}
               </Space>

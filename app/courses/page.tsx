@@ -28,6 +28,8 @@ import { coursesApi } from "@/lib/api/courses";
 import type { CourseSummary } from "@/lib/api/types";
 import { AuthLoadingState } from "@/components/auth-loading-state";
 import { PersonalShell } from "@/components/personal-shell";
+import { RichTextEditor } from "@/components/rich-text-editor";
+import { RichTextRenderer } from "@/components/rich-text-renderer";
 import { RefreshButton } from "@/components/refresh-button";
 import { useAuth } from "@/lib/auth/auth-context";
 
@@ -160,9 +162,7 @@ export default function CoursesPage() {
                     </Link>,
                   ]}
                 >
-                  <Typography.Paragraph type="secondary" ellipsis={{ rows: 2 }}>
-                    {course.description || "暂无描述"}
-                  </Typography.Paragraph>
+                  <RichTextRenderer html={course.description} emptyText="暂无描述" className="muted" />
                   <Space direction="vertical" size={4}>
                     <Typography.Text type="secondary">教师：{course.ownerUsername}</Typography.Text>
                     <Typography.Text className="mono">邀请码：{course.inviteCode}</Typography.Text>
@@ -191,7 +191,11 @@ export default function CoursesPage() {
             <Input value={createTitle} onChange={(event) => setCreateTitle(event.target.value)} required />
           </Form.Item>
           <Form.Item label="课程描述">
-            <Input.TextArea value={createDescription} rows={4} onChange={(event) => setCreateDescription(event.target.value)} />
+            <RichTextEditor
+              value={createDescription}
+              onChange={setCreateDescription}
+              placeholder="简介课程目标、内容安排或适合人群"
+            />
           </Form.Item>
         </Form>
       </Modal>
