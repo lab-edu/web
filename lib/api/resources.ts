@@ -36,4 +36,7 @@ export const resourcesApi = {
   buildFileUrl(resourceId: string) {
     return `${resolveCoreBaseUrl()}/api/v1/resources/${resourceId}/file`;
   },
+  buildPublicFileUrl(resourceId: string) {
+    return `${resolveCoreBaseUrl()}/api/v1/public/resources/${resourceId}/file`;
+  },
 };

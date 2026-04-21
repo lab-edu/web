@@ -2,8 +2,9 @@
 
 import { useParams } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
-import { FileOutlined } from "@ant-design/icons";
+import { FileOutlined, EyeOutlined } from "@ant-design/icons";
 import { Alert, Card, Empty, List, Space, Tag, Typography } from "antd";
+import Link from "next/link";
 import { coursesApi } from "@/lib/api/courses";
 import { resourcesApi } from "@/lib/api/resources";
 import type { CourseDetail, CourseResource } from "@/lib/api/types";
@@ -62,11 +63,34 @@ export default function CourseResourcesPage() {
             itemLayout="horizontal"
             dataSource={resources}
             renderItem={(resource) => (
-              <List.Item actions={[resource.type === "FILE" ? <a key="download" href={resourcesApi.buildFileUrl(resource.id)} target="_blank" rel="noreferrer">下载</a> : <a key="open" href={resource.externalUrl ?? "#"} target="_blank" rel="noreferrer">打开链接</a>]}> 
+              <List.Item
+                actions={[
+                  resource.type === "FILE" ? (
+                    <Space key="actions">
+                      <Link href={`/courses/${courseId}/resources/${resource.id}`} legacyBehavior>
+                        <a><EyeOutlined /> 预览</a>
+                      </Link>
+                      <a key="download" href={resourcesApi.buildFileUrl(resource.id)} target="_blank" rel="noreferrer">
+                        下载
+                      </a>
+                    </Space>
+                  ) : (
+                    <a key="open" href={resource.externalUrl ?? "#"} target="_blank" rel="noreferrer">
+                      打开链接
+                    </a>
+                  ),
+                ]}
+              >
                 <List.Item.Meta
                   title={
                     <Space>
-                      <span>{resource.name}</span>
+                      {resource.type === "FILE" ? (
+                        <Link href={`/courses/${courseId}/resources/${resource.id}`} legacyBehavior>
+                          <a>{resource.name}</a>
+                        </Link>
+                      ) : (
+                        <span>{resource.name}</span>
+                      )}
                       <Tag>{resource.type}</Tag>
                       {resource.category ? <Tag color="cyan">{resource.category}</Tag> : null}
                     </Space>
