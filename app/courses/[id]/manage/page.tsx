@@ -170,6 +170,7 @@ export default function CourseManagePage() {
       setCreatingResource(false);
       await loadData();
     } catch (createError) {
+      console.error('Upload resource error:', createError);
       setError(createError instanceof Error ? createError.message : "上传资源失败");
     } finally {
       setSubmittingResource(false);
@@ -275,11 +276,17 @@ export default function CourseManagePage() {
     return <AuthLoadingState />;
   }
 
-  if (user.role !== "TEACHER") {
+  // 等待课程数据加载
+  if (!course) {
+    return <AuthLoadingState />;
+  }
+
+  // 检查用户是否是课程所有者或管理员
+  if (course.owner.id !== user.id && user.role !== "ADMIN") {
     return (
       <CourseShell title={course?.title || "课程管理"} subtitle="当前账号没有管理权限。" courseId={courseId}>
         <Card>
-          <Empty description="仅教师可进入课程管理" />
+          <Empty description="仅课程创建者可管理课程" />
         </Card>
       </CourseShell>
     );
