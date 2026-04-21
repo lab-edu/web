@@ -7,6 +7,7 @@ import {
   BellOutlined,
   BookOutlined,
   FileTextOutlined,
+  FormOutlined,
   ReadOutlined,
   SettingOutlined,
 } from "@ant-design/icons";
@@ -29,6 +30,9 @@ function resolveCourseMenuKey(pathname: string) {
   }
   if (pathname.endsWith("/resources")) {
     return "resources";
+  }
+  if (pathname.endsWith("/assignments") || pathname.includes("/assignments/")) {
+    return "assignments";
   }
   if (pathname.endsWith("/manage")) {
     return "manage";
@@ -67,6 +71,12 @@ export function CourseShell({ title, subtitle, actions, children, courseId }: Co
       key: "resources",
       icon: <FileTextOutlined />,
       label: hasCourse ? <Link href={`${base}/resources`}>课程资源</Link> : "课程资源",
+      disabled: !hasCourse,
+    },
+    {
+      key: "assignments",
+      icon: <FormOutlined />,
+      label: hasCourse ? <Link href={`${base}/assignments`}>作业</Link> : "作业",
       disabled: !hasCourse,
     },
     ...(showManage

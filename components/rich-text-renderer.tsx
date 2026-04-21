@@ -33,8 +33,9 @@ const allowedTags = [
   "span",
 ];
 
-function normalizeHtml(value: string) {
-  const trimmed = value.trim();
+function normalizeHtml(value?: string | null) {
+  const safe = (value ?? "").toString();
+  const trimmed = safe.trim();
   if (!trimmed) {
     return "";
   }
