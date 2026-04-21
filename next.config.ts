@@ -1,4 +1,5 @@
 import type { NextConfig } from "next";
+import type { RemotePattern } from "next/dist/shared/lib/image-config";
 
 const DEFAULT_IMAGE_ALLOWED_ORIGINS = [
   "http://localhost:8080",
@@ -6,7 +7,7 @@ const DEFAULT_IMAGE_ALLOWED_ORIGINS = [
   "http://demo.lab-edu.team:8080",
 ];
 
-function parseAllowedOrigins(value: string | undefined) {
+function parseAllowedOrigins(value: string | undefined): RemotePattern[] {
   const rawOrigins = value
     ? value.split(",").map((item) => item.trim()).filter(Boolean)
     : DEFAULT_IMAGE_ALLOWED_ORIGINS;
@@ -15,10 +16,11 @@ function parseAllowedOrigins(value: string | undefined) {
     .map((origin) => {
       try {
         const parsed = new URL(origin);
+        const protocol = parsed.protocol.replace(":", "") as "http" | "https";
         return {
-          protocol: parsed.protocol.replace(":", ""),
+          protocol,
           hostname: parsed.hostname,
-          port: parsed.port || (parsed.protocol === "https:" ? "443" : "80"),
+          port: parsed.port || "",
           pathname: "/api/v1/resources/**",
         };
       } catch {
