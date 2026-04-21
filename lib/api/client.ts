@@ -55,6 +55,13 @@ export async function apiRequest<T>(path: string, init: RequestInitWithJson = {}
   const isJson = response.headers.get("content-type")?.includes("application/json");
   const payload = isJson ? ((await response.json()) as ApiEnvelope<T>) : null;
 
+  // 调试日志：记录 API 路径与返回负载（仅用于开发）
+  try {
+    console.debug("[apiRequest]", path, init.method ?? "GET", payload);
+  } catch {
+    // ignore
+  }
+
   if (!response.ok) {
     console.error('API request failed:', response.status, response.statusText, payload, path);
     throw new ApiError(payload?.message ?? `HTTP ${response.status}`, response.status, payload?.code);

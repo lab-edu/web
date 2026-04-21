@@ -194,7 +194,7 @@ export type ResourceCreateData = {
   resource: CourseResource;
 };
 
-export type LearningTaskType = "MEDIA" | "QUIZ";
+export type LearningTaskType = "MEDIA";
 
 export type LearningTaskKind = "LEARNING" | "HOMEWORK";
 
@@ -337,4 +337,140 @@ export type CourseHomeworkItem = {
 
 export type CourseHomeworkListData = {
   items: CourseHomeworkItem[];
+};
+
+// 通知（收件箱）类型
+export type NotificationType = "HOMEWORK_REMINDER";
+
+export type InboxNotificationItem = {
+  id: string;
+  notificationType: NotificationType;
+  title: string;
+  content: string | null;
+  actionPath: string | null;
+  deliveredAt: string;
+  readAt: string | null;
+};
+
+export type InboxNotificationListData = {
+  items: InboxNotificationItem[];
+};
+
+// 作业系统类型定义
+export type AssignmentTaskItemResponse = {
+  id: string;
+  question: string;
+  questionType: LearningQuestionType;
+  options: string[];
+  referenceAnswer: string;
+  maxScore: number;
+  sortOrder: number;
+  originalTaskId: string | null;
+};
+
+export type AssignmentResponse = {
+  id: string;
+  courseId: string;
+  title: string;
+  description: string | null;
+  totalScore: number;
+  startAt: string | null;
+  dueAt: string | null;
+  required: boolean;
+  sortOrder: number;
+  published: boolean;
+  notifyOnStart: boolean;
+  notifyBeforeDue24h: boolean;
+  notifyOnDue: boolean;
+  autoCalculateTotal: boolean;
+  createdBy: UserSummary;
+  createdAt: string;
+  updatedAt: string;
+  taskItems: AssignmentTaskItemResponse[];
+};
+
+export type AssignmentTaskItemRequest = {
+  question: string;
+  questionType: LearningQuestionType;
+  options: string[];
+  referenceAnswer: string;
+  maxScore: number;
+  sortOrder: number;
+};
+
+export type AssignmentCreateRequest = {
+  title: string;
+  description?: string;
+  totalScore?: number;
+  startAt?: string | null;
+  dueAt?: string | null;
+  required?: boolean;
+  sortOrder?: number;
+  published?: boolean;
+  notifyOnStart?: boolean;
+  notifyBeforeDue24h?: boolean;
+  notifyOnDue?: boolean;
+  autoCalculateTotal?: boolean;
+  taskItems: AssignmentTaskItemRequest[];
+};
+
+export type AssignmentUpdateRequest = {
+  title?: string;
+  description?: string | null;
+  totalScore?: number;
+  startAt?: string | null;
+  dueAt?: string | null;
+  required?: boolean;
+  sortOrder?: number;
+  published?: boolean;
+  notifyOnStart?: boolean;
+  notifyBeforeDue24h?: boolean;
+  notifyOnDue?: boolean;
+  autoCalculateTotal?: boolean;
+  taskItems?: AssignmentTaskItemRequest[];
+};
+
+export type AssignmentAnswerResponse = {
+  taskItemId: string;
+  question: string;
+  questionType: LearningQuestionType;
+  options: string[];
+  answer: string;
+  maxScore: number;
+  score: number | null;
+  feedback: string | null;
+};
+
+export type AssignmentSubmissionResponse = {
+  id: string;
+  assignmentId: string;
+  answers: AssignmentAnswerResponse[];
+  totalScore: number | null;
+  feedback: string | null;
+  gradedBy: UserSummary | null;
+  gradedAt: string | null;
+  latest: boolean;
+  submittedBy: UserSummary;
+  submittedAt: string;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type AssignmentSubmissionRequest = {
+  answers: Array<{
+    taskItemId: string;
+    answer: string;
+  }>;
+};
+
+export type AssignmentItemGrade = {
+  taskItemId: string;
+  score: number;
+  feedback?: string;
+};
+
+export type AssignmentGradeRequest = {
+  itemGrades: AssignmentItemGrade[];
+  totalScore?: number;
+  feedback?: string;
 };

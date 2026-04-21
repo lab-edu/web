@@ -22,15 +22,15 @@ import Placeholder from "@tiptap/extension-placeholder";
 import Underline from "@tiptap/extension-underline";
 
 type RichTextEditorProps = {
-  value: string;
-  onChange: (value: string) => void;
+  value?: string | null;
+  onChange?: (value: string) => void;
   placeholder?: string;
   disabled?: boolean;
   className?: string;
 };
-
-function normalizeHtml(value: string) {
-  const trimmed = value.trim();
+function normalizeHtml(value?: string | null) {
+  const safe = (value ?? "").toString();
+  const trimmed = safe.trim();
   if (!trimmed) {
     return "<p></p>";
   }
@@ -46,7 +46,7 @@ function normalizeHtml(value: string) {
 }
 
 export function RichTextEditor({
-  value,
+  value = "",
   onChange,
   placeholder = "请输入内容",
   disabled = false,
@@ -75,7 +75,9 @@ export function RichTextEditor({
     content: normalizeHtml(value),
     editable: !disabled,
     onUpdate: ({ editor: currentEditor }) => {
-      onChange(currentEditor.isEmpty ? "" : currentEditor.getHTML());
+      if (onChange) {
+        onChange(currentEditor.isEmpty ? "" : currentEditor.getHTML());
+      }
     },
     editorProps: {
       attributes: {
