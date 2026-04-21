@@ -11,7 +11,6 @@ import {
   SettingOutlined,
 } from "@ant-design/icons";
 import { ShellFrame } from "@/components/shell-frame";
-import { useAuth } from "@/lib/auth/auth-context";
 
 type CourseShellProps = {
   title: string;
@@ -39,7 +38,6 @@ function resolveCourseMenuKey(pathname: string) {
 
 export function CourseShell({ title, subtitle, actions, children, courseId }: CourseShellProps) {
   const pathname = usePathname();
-  const { user } = useAuth();
 
   const selectedMenuKey = resolveCourseMenuKey(pathname);
 

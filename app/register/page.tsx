@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { FormEvent, useEffect, useState } from "react";
 import { TeamOutlined } from "@ant-design/icons";
-import { Alert, Button, Card, Col, Form, Input, Row, Select, Space, Typography } from "antd";
+import { Alert, Button, Card, Col, Form, Input, Row, Space, Typography } from "antd";
 import { authApi } from "@/lib/api/auth";
 import { ApiError } from "@/lib/api/client";
 import { useAuth } from "@/lib/auth/auth-context";

@@ -46,7 +46,6 @@ export default function CoursesPage() {
   const [inviteCode, setInviteCode] = useState("");
 
   // 任何认证用户都可以创建课程
-  const canCreateCourse = true;
   const heading = useMemo(() => {
     if (!user) {
       return "课程中心";
