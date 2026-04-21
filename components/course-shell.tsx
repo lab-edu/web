@@ -45,7 +45,8 @@ export function CourseShell({ title, subtitle, actions, children, courseId }: Co
 
   const hasCourse = Boolean(courseId);
   const base = hasCourse ? `/courses/${courseId}` : "/courses";
-  const showManage = user?.role === "TEACHER" && hasCourse;
+  // 管理菜单项，目标页面会进行权限检查
+  const showManage = hasCourse;
   const menuItems = [
     {
       key: "home",

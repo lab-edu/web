@@ -18,7 +18,7 @@ export default function RegisterPage() {
   const [displayName, setDisplayName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [role, setRole] = useState<UserRole>("STUDENT");
+  const role: UserRole = "USER"; // 所有新用户默认为 USER
 
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -72,10 +72,10 @@ export default function RegisterPage() {
                   加入课堂空间
                 </Typography.Title>
                 <Typography.Paragraph style={{ color: "rgba(255,255,255,0.86)", margin: 0 }}>
-                  选择教师或学生角色，完成账号创建后即可参与课程、实验与公告协作。
+                  完成账号创建后即可创建或加入课程，参与实验与公告协作。
                 </Typography.Paragraph>
                 <Typography.Text style={{ color: "#fff" }}>
-                  <TeamOutlined /> 双角色支持：教师 / 学生
+                  <TeamOutlined /> 支持创建课程和加入课程
                 </Typography.Text>
               </Space>
             </div>
@@ -98,16 +98,6 @@ export default function RegisterPage() {
                 </Form.Item>
                 <Form.Item label="密码" required>
                   <Input.Password value={password} onChange={(event) => setPassword(event.target.value)} minLength={8} required />
-                </Form.Item>
-                <Form.Item label="身份" required>
-                  <Select
-                    value={role}
-                    onChange={(value) => setRole(value as UserRole)}
-                    options={[
-                      { value: "STUDENT", label: "学生" },
-                      { value: "TEACHER", label: "教师" },
-                    ]}
-                  />
                 </Form.Item>
 
                 {error ? <Alert style={{ marginBottom: 16 }} type="error" message={error} showIcon /> : null}

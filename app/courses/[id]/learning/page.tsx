@@ -30,6 +30,7 @@ import { RichTextRenderer } from "@/components/rich-text-renderer";
 import { RefreshButton } from "@/components/refresh-button";
 import { useAuth } from "@/lib/auth/auth-context";
 import { learningApi } from "@/lib/api/learning";
+import { coursesApi } from "@/lib/api/courses";
 import type {
   CourseLearningDetail,
   CourseLearningOverview,
@@ -38,6 +39,7 @@ import type {
   LearningMaterialType,
   LearningQuestionType,
   LearningTaskType,
+  CourseDetail,
 } from "@/lib/api/types";
 
 const taskTypeOptions: Array<{ label: string; value: LearningTaskType }> = [
@@ -97,6 +99,7 @@ export default function CourseLearningPage() {
 
   const [detail, setDetail] = useState<CourseLearningDetail | null>(null);
   const [overview, setOverview] = useState<CourseLearningOverview | null>(null);
+  const [courseDetail, setCourseDetail] = useState<CourseDetail | null>(null);
   const [selectedUnitId, setSelectedUnitId] = useState<string | null>(null);
   const [selectedPointId, setSelectedPointId] = useState<string | null>(null);
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
@@ -143,23 +146,26 @@ export default function CourseLearningPage() {
   const [studentSubmitting, setStudentSubmitting] = useState(false);
   const [gradeDrafts, setGradeDrafts] = useState<Record<string, { score?: number; feedback?: string; loading?: boolean }>>({});
 
-  const isTeacher = user?.role === "TEACHER";
+  const isTeacher = user?.role === "ADMIN" || (courseDetail?.owner.id === user?.id);
   const managementMode = isTeacher && searchParams.get("manage") === "1";
 
   const loadData = useCallback(async () => {
     setBusy(true);
     setError(null);
     try {
-      const [detailData, overviewData] = await Promise.all([
+      const [detailData, overviewData, courseData] = await Promise.all([
         learningApi.detail(courseId),
         learningApi.overview(courseId),
+        coursesApi.detail(courseId),
       ]);
       setDetail(detailData);
       setOverview(overviewData);
+      setCourseDetail(courseData);
     } catch (loadError) {
       setError(loadError instanceof Error ? loadError.message : "加载课程学习数据失败");
       setDetail(null);
       setOverview(null);
+      setCourseDetail(null);
     } finally {
       setBusy(false);
     }

@@ -1,4 +1,4 @@
-export type UserRole = "STUDENT" | "TEACHER";
+export type UserRole = "USER" | "ADMIN";
 
 export type ApiEnvelope<T> = {
   code: number;
@@ -24,7 +24,7 @@ export type AuthRegisterPayload = {
   email: string;
   password: string;
   displayName?: string;
-  role: UserRole;
+  role?: UserRole; // 可选，默认为 USER
 };
 
 export type AuthLoginData = {

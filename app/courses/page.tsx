@@ -45,13 +45,16 @@ export default function CoursesPage() {
   const [createDescription, setCreateDescription] = useState("");
   const [inviteCode, setInviteCode] = useState("");
 
-  const isTeacher = user?.role === "TEACHER";
+  // 任何认证用户都可以创建课程
+  const canCreateCourse = true;
   const heading = useMemo(() => {
     if (!user) {
       return "课程中心";
     }
-    return isTeacher ? "我负责的课程" : "我参与的课程";
-  }, [user, isTeacher]);
+    // 根据用户是否拥有课程来显示不同标题
+    const hasOwnedCourses = courses.some(course => course.ownerId === user.id);
+    return hasOwnedCourses ? "我负责的课程" : "我参与的课程";
+  }, [user, courses]);
 
   const loadCourses = async () => {
     setBusy(true);
@@ -111,15 +114,12 @@ export default function CoursesPage() {
       actions={(
         <Space>
           <RefreshButton onClick={() => void loadCourses()} loading={busy} />
-          {isTeacher ? (
-            <Button type="primary" icon={<PlusCircleOutlined />} onClick={() => setShowCreateModal(true)}>
-              创建课程
-            </Button>
-          ) : (
-            <Button type="primary" icon={<UserAddOutlined />} onClick={() => setShowJoinModal(true)}>
-              加入课程
-            </Button>
-          )}
+          <Button type="primary" icon={<PlusCircleOutlined />} onClick={() => setShowCreateModal(true)}>
+            创建课程
+          </Button>
+          <Button type="primary" icon={<UserAddOutlined />} onClick={() => setShowJoinModal(true)}>
+            加入课程
+          </Button>
         </Space>
       )}
     >
@@ -131,7 +131,7 @@ export default function CoursesPage() {
         </Col>
         <Col xs={24} md={8}>
           <Card>
-            <Statistic title="角色" value={isTeacher ? "教师" : "学生"} />
+            <Statistic title="角色" value={courses.some(course => course.ownerId === user?.id) ? "教师" : "学生"} />
           </Card>
         </Col>
         <Col xs={24} md={8}>
@@ -184,7 +184,6 @@ export default function CoursesPage() {
         }}
         okText="创建"
         cancelText="取消"
-        okButtonProps={{ disabled: !isTeacher }}
       >
         <Form id="create-course-form" layout="vertical" onSubmitCapture={onCreateCourse}>
           <Form.Item label="课程名称" required>
