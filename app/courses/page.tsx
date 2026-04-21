@@ -28,6 +28,8 @@ import { coursesApi } from "@/lib/api/courses";
 import type { CourseSummary } from "@/lib/api/types";
 import { AuthLoadingState } from "@/components/auth-loading-state";
 import { PersonalShell } from "@/components/personal-shell";
+import { RichTextEditor } from "@/components/rich-text-editor";
+import { RichTextRenderer } from "@/components/rich-text-renderer";
 import { RefreshButton } from "@/components/refresh-button";
 import { useAuth } from "@/lib/auth/auth-context";
 
@@ -43,13 +45,15 @@ export default function CoursesPage() {
   const [createDescription, setCreateDescription] = useState("");
   const [inviteCode, setInviteCode] = useState("");
 
-  const isTeacher = user?.role === "TEACHER";
+  // 任何认证用户都可以创建课程
   const heading = useMemo(() => {
     if (!user) {
       return "课程中心";
     }
-    return isTeacher ? "我负责的课程" : "我参与的课程";
-  }, [user, isTeacher]);
+    // 根据用户是否拥有课程来显示不同标题
+    const hasOwnedCourses = courses.some(course => course.ownerId === user.id);
+    return hasOwnedCourses ? "我负责的课程" : "我参与的课程";
+  }, [user, courses]);
 
   const loadCourses = async () => {
     setBusy(true);
@@ -109,15 +113,12 @@ export default function CoursesPage() {
       actions={(
         <Space>
           <RefreshButton onClick={() => void loadCourses()} loading={busy} />
-          {isTeacher ? (
-            <Button type="primary" icon={<PlusCircleOutlined />} onClick={() => setShowCreateModal(true)}>
-              创建课程
-            </Button>
-          ) : (
-            <Button type="primary" icon={<UserAddOutlined />} onClick={() => setShowJoinModal(true)}>
-              加入课程
-            </Button>
-          )}
+          <Button type="primary" icon={<PlusCircleOutlined />} onClick={() => setShowCreateModal(true)}>
+            创建课程
+          </Button>
+          <Button type="primary" icon={<UserAddOutlined />} onClick={() => setShowJoinModal(true)}>
+            加入课程
+          </Button>
         </Space>
       )}
     >
@@ -129,7 +130,7 @@ export default function CoursesPage() {
         </Col>
         <Col xs={24} md={8}>
           <Card>
-            <Statistic title="角色" value={isTeacher ? "教师" : "学生"} />
+            <Statistic title="角色" value={courses.some(course => course.ownerId === user?.id) ? "教师" : "学生"} />
           </Card>
         </Col>
         <Col xs={24} md={8}>
@@ -160,9 +161,7 @@ export default function CoursesPage() {
                     </Link>,
                   ]}
                 >
-                  <Typography.Paragraph type="secondary" ellipsis={{ rows: 2 }}>
-                    {course.description || "暂无描述"}
-                  </Typography.Paragraph>
+                  <RichTextRenderer html={course.description} emptyText="暂无描述" className="muted" />
                   <Space direction="vertical" size={4}>
                     <Typography.Text type="secondary">教师：{course.ownerUsername}</Typography.Text>
                     <Typography.Text className="mono">邀请码：{course.inviteCode}</Typography.Text>
@@ -184,14 +183,17 @@ export default function CoursesPage() {
         }}
         okText="创建"
         cancelText="取消"
-        okButtonProps={{ disabled: !isTeacher }}
       >
         <Form id="create-course-form" layout="vertical" onSubmitCapture={onCreateCourse}>
           <Form.Item label="课程名称" required>
             <Input value={createTitle} onChange={(event) => setCreateTitle(event.target.value)} required />
           </Form.Item>
           <Form.Item label="课程描述">
-            <Input.TextArea value={createDescription} rows={4} onChange={(event) => setCreateDescription(event.target.value)} />
+            <RichTextEditor
+              value={createDescription}
+              onChange={setCreateDescription}
+              placeholder="简介课程目标、内容安排或适合人群"
+            />
           </Form.Item>
         </Form>
       </Modal>

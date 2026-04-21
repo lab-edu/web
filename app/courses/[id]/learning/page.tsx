@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useSearchParams } from "next/navigation";
 import { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
@@ -26,9 +25,12 @@ import {
 import { BookOutlined, BulbOutlined, FileOutlined, HolderOutlined, PlusOutlined } from "@ant-design/icons";
 import { AuthLoadingState } from "@/components/auth-loading-state";
 import { CourseShell } from "@/components/course-shell";
+import { RichTextEditor } from "@/components/rich-text-editor";
+import { RichTextRenderer } from "@/components/rich-text-renderer";
 import { RefreshButton } from "@/components/refresh-button";
 import { useAuth } from "@/lib/auth/auth-context";
 import { learningApi } from "@/lib/api/learning";
+import { coursesApi } from "@/lib/api/courses";
 import type {
   CourseLearningDetail,
   CourseLearningOverview,
@@ -37,6 +39,7 @@ import type {
   LearningMaterialType,
   LearningQuestionType,
   LearningTaskType,
+  CourseDetail,
 } from "@/lib/api/types";
 
 const taskTypeOptions: Array<{ label: string; value: LearningTaskType }> = [
@@ -96,6 +99,7 @@ export default function CourseLearningPage() {
 
   const [detail, setDetail] = useState<CourseLearningDetail | null>(null);
   const [overview, setOverview] = useState<CourseLearningOverview | null>(null);
+  const [courseDetail, setCourseDetail] = useState<CourseDetail | null>(null);
   const [selectedUnitId, setSelectedUnitId] = useState<string | null>(null);
   const [selectedPointId, setSelectedPointId] = useState<string | null>(null);
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
@@ -142,23 +146,26 @@ export default function CourseLearningPage() {
   const [studentSubmitting, setStudentSubmitting] = useState(false);
   const [gradeDrafts, setGradeDrafts] = useState<Record<string, { score?: number; feedback?: string; loading?: boolean }>>({});
 
-  const isTeacher = user?.role === "TEACHER";
+  const isTeacher = user?.role === "ADMIN" || (courseDetail?.owner.id === user?.id);
   const managementMode = isTeacher && searchParams.get("manage") === "1";
 
   const loadData = useCallback(async () => {
     setBusy(true);
     setError(null);
     try {
-      const [detailData, overviewData] = await Promise.all([
+      const [detailData, overviewData, courseData] = await Promise.all([
         learningApi.detail(courseId),
         learningApi.overview(courseId),
+        coursesApi.detail(courseId),
       ]);
       setDetail(detailData);
       setOverview(overviewData);
+      setCourseDetail(courseData);
     } catch (loadError) {
       setError(loadError instanceof Error ? loadError.message : "加载课程学习数据失败");
       setDetail(null);
       setOverview(null);
+      setCourseDetail(null);
     } finally {
       setBusy(false);
     }
@@ -561,7 +568,11 @@ export default function CourseLearningPage() {
                   <Input value={unitTitle} onChange={(event) => setUnitTitle(event.target.value)} required />
                 </Form.Item>
                 <Form.Item label="单元简介">
-                  <Input.TextArea value={unitDescription} rows={3} onChange={(event) => setUnitDescription(event.target.value)} />
+                  <RichTextEditor
+                    value={unitDescription}
+                    onChange={setUnitDescription}
+                    placeholder="为这个学习单元补充目标、范围或学习建议"
+                  />
                 </Form.Item>
                 <Row gutter={12}>
                   <Col xs={24} md={8}>
@@ -599,7 +610,11 @@ export default function CourseLearningPage() {
                   <Input value={pointTitle} onChange={(event) => setPointTitle(event.target.value)} required />
                 </Form.Item>
                 <Form.Item label="知识点说明">
-                  <Input.TextArea value={pointSummary} rows={3} onChange={(event) => setPointSummary(event.target.value)} />
+                  <RichTextEditor
+                    value={pointSummary}
+                    onChange={setPointSummary}
+                    placeholder="说明这个知识点要掌握什么"
+                  />
                 </Form.Item>
                 <Row gutter={12}>
                   <Col xs={24} md={8}>
@@ -630,7 +645,11 @@ export default function CourseLearningPage() {
                   <Input value={taskTitle} onChange={(event) => setTaskTitle(event.target.value)} required />
                 </Form.Item>
                 <Form.Item label="任务说明">
-                  <Input.TextArea value={taskDescription} rows={3} onChange={(event) => setTaskDescription(event.target.value)} />
+                  <RichTextEditor
+                    value={taskDescription}
+                    onChange={setTaskDescription}
+                    placeholder="补充任务背景、提交要求或评分说明"
+                  />
                 </Form.Item>
                 <Row gutter={12}>
                   <Col xs={24} md={8}>
@@ -695,7 +714,11 @@ export default function CourseLearningPage() {
                           {materialType === "LINK" ? (
                             <Input value={mediaUrl} onChange={(event) => setMediaUrl(event.target.value)} placeholder="视频 / 外部链接" />
                           ) : materialType === "TEXT" ? (
-                            <Input.TextArea value={contentText} rows={4} onChange={(event) => setContentText(event.target.value)} placeholder="输入文本学习内容" />
+                            <RichTextEditor
+                              value={contentText}
+                              onChange={setContentText}
+                              placeholder="输入文本学习内容"
+                            />
                           ) : (
                             <Input type="file" onChange={(event) => setTaskFile(event.target.files?.[0] ?? null)} />
                           )}
@@ -713,7 +736,11 @@ export default function CourseLearningPage() {
                       </Col>
                       <Col xs={24} md={16}>
                         <Form.Item label="题目内容">
-                          <Input.TextArea value={contentText} rows={4} onChange={(event) => setContentText(event.target.value)} placeholder="题干或说明" />
+                          <RichTextEditor
+                            value={contentText}
+                            onChange={setContentText}
+                            placeholder="题干或说明"
+                          />
                         </Form.Item>
                       </Col>
                     </Row>
@@ -744,14 +771,6 @@ export default function CourseLearningPage() {
                 </Button>
               </Form>
             </Card>
-          ) : isTeacher ? (
-            <Alert
-              style={{ marginBottom: 16 }}
-              type="info"
-              showIcon
-              message="课程结构组织已归并到管理"
-              description={<Link href={`/courses/${courseId}/manage`}>进入管理页维护课程结构和任务</Link>}
-            />
           ) : null}
 
           <Card className="learning-structure-card" title={<Space><BookOutlined />课程结构</Space>} loading={busy}>
@@ -958,6 +977,7 @@ export default function CourseLearningPage() {
                 ) : null}
                 <Typography.Title level={4} style={{ margin: 0 }}>{selectedTask.title}</Typography.Title>
                 {selectedTask.description ? <Typography.Paragraph>{selectedTask.description}</Typography.Paragraph> : null}
+                {selectedTask.description ? <RichTextRenderer html={selectedTask.description} /> : null}
                 {selectedTask.taskType === "MEDIA" ? (
                   <>
                     {selectedTask.materialType === "FILE" ? (
@@ -967,12 +987,12 @@ export default function CourseLearningPage() {
                       <a href={selectedTask.mediaUrl} target="_blank" rel="noreferrer">打开学习链接</a>
                     ) : null}
                     {selectedTask.materialType === "TEXT" && selectedTask.contentText ? (
-                      <Typography.Paragraph style={{ whiteSpace: "pre-wrap" }}>{selectedTask.contentText}</Typography.Paragraph>
+                      <RichTextRenderer html={selectedTask.contentText} />
                     ) : null}
                   </>
                 ) : (
                   <>
-                    {selectedTask.contentText ? <Typography.Paragraph style={{ whiteSpace: "pre-wrap" }}>{selectedTask.contentText}</Typography.Paragraph> : null}
+                    {selectedTask.contentText ? <RichTextRenderer html={selectedTask.contentText} /> : null}
                     {selectedTask.options.length ? (
                       <List
                         size="small"
@@ -982,7 +1002,7 @@ export default function CourseLearningPage() {
                       />
                     ) : null}
                     {isTeacher && selectedTask.referenceAnswer ? (
-                      <Alert style={{ marginTop: 12 }} type="info" showIcon message="参考答案" description={selectedTask.referenceAnswer} />
+                      <Alert style={{ marginTop: 12 }} type="info" showIcon message="参考答案" description={<RichTextRenderer html={selectedTask.referenceAnswer} />} />
                     ) : null}
                   </>
                 )}
@@ -997,7 +1017,11 @@ export default function CourseLearningPage() {
               <Card title="提交答卷">
               <Form layout="vertical" onSubmitCapture={submitTask}>
                 <Form.Item label="作答文本">
-                  <Input.TextArea value={answerText} rows={5} onChange={(event) => setAnswerText(event.target.value)} placeholder="填写你的答案或学习反馈" />
+                  <RichTextEditor
+                    value={answerText}
+                    onChange={setAnswerText}
+                    placeholder="填写你的答案或学习反馈"
+                  />
                 </Form.Item>
                 <Form.Item label="附加文件">
                   <Input type="file" onChange={(event) => setAnswerFile(event.target.files?.[0] ?? null)} />
@@ -1011,9 +1035,9 @@ export default function CourseLearningPage() {
               {taskBusy ? <Spin /> : latestSubmission ? (
                 <Space direction="vertical" size={4} style={{ width: "100%", marginTop: 8 }}>
                   <Typography.Text>提交时间：{new Date(latestSubmission.submittedAt).toLocaleString("zh-CN")}</Typography.Text>
-                  <Typography.Text>答案：{latestSubmission.answerText || latestSubmission.fileName || "无"}</Typography.Text>
+                  {latestSubmission.answerText ? <RichTextRenderer html={latestSubmission.answerText} emptyText="无" /> : <Typography.Text>答案：{latestSubmission.fileName || "无"}</Typography.Text>}
                   {latestSubmission.score !== null ? <Tag color="blue">评分 {latestSubmission.score}</Tag> : <Tag>待评分</Tag>}
-                  {latestSubmission.feedback ? <Typography.Text>评语：{latestSubmission.feedback}</Typography.Text> : null}
+                  {latestSubmission.feedback ? <RichTextRenderer html={latestSubmission.feedback} className="muted" /> : null}
                 </Space>
               ) : <Empty description="尚无提交" />}
               </Card>
@@ -1038,6 +1062,7 @@ export default function CourseLearningPage() {
                         </Space>
                         <Typography.Text type="secondary">提交时间：{new Date(submission.submittedAt).toLocaleString("zh-CN")}</Typography.Text>
                         {submission.answerText ? <Typography.Paragraph style={{ marginBottom: 0 }}>{submission.answerText}</Typography.Paragraph> : null}
+                        {submission.answerText ? <RichTextRenderer html={submission.answerText} /> : null}
                         {submission.fileName ? <Typography.Text type="secondary">附件：{submission.fileName}</Typography.Text> : null}
                         <Space wrap>
                           <InputNumber

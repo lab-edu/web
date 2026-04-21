@@ -56,6 +56,7 @@ export async function apiRequest<T>(path: string, init: RequestInitWithJson = {}
   const payload = isJson ? ((await response.json()) as ApiEnvelope<T>) : null;
 
   if (!response.ok) {
+    console.error('API request failed:', response.status, response.statusText, payload, path);
     throw new ApiError(payload?.message ?? `HTTP ${response.status}`, response.status, payload?.code);
   }
 

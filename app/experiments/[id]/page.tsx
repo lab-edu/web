@@ -22,9 +22,12 @@ import {
 } from "antd";
 import { experimentsApi } from "@/lib/api/experiments";
 import { submissionsApi } from "@/lib/api/submissions";
-import type { ExperimentDetail, SubmissionDetail } from "@/lib/api/types";
+import { coursesApi } from "@/lib/api/courses";
+import type { ExperimentDetail, SubmissionDetail, CourseDetail } from "@/lib/api/types";
 import { AuthLoadingState } from "@/components/auth-loading-state";
 import { CourseShell } from "@/components/course-shell";
+import { RichTextEditor } from "@/components/rich-text-editor";
+import { RichTextRenderer } from "@/components/rich-text-renderer";
 import { RefreshButton } from "@/components/refresh-button";
 import { useAuth } from "@/lib/auth/auth-context";
 
@@ -38,6 +41,7 @@ export default function ExperimentDetailPage() {
 
   const [experiment, setExperiment] = useState<ExperimentDetail | null>(null);
   const [submissions, setSubmissions] = useState<SubmissionDetail[]>([]);
+  const [courseDetail, setCourseDetail] = useState<CourseDetail | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -55,16 +59,19 @@ export default function ExperimentDetailPage() {
     setBusy(true);
     setError(null);
     try {
-      const [experimentData, submissionsData] = await Promise.all([
+      const [experimentData, submissionsData, courseData] = await Promise.all([
         experimentsApi.detail(courseId, experimentId),
         submissionsApi.list(experimentId),
+        coursesApi.detail(courseId),
       ]);
       setExperiment(experimentData);
       setSubmissions(submissionsData.items);
+      setCourseDetail(courseData);
     } catch (loadError) {
       setError(loadError instanceof Error ? loadError.message : "加载实验数据失败");
       setExperiment(null);
       setSubmissions([]);
+      setCourseDetail(null);
     } finally {
       setBusy(false);
     }
@@ -75,6 +82,9 @@ export default function ExperimentDetailPage() {
       void loadData();
     }
   }, [loading, user, loadData]);
+
+  const isTeacher = user?.role === "ADMIN" || (courseDetail?.owner.id === user?.id);
+  const isStudent = user?.role !== "ADMIN" && courseDetail?.owner.id !== user?.id;
 
   const onSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -149,14 +159,18 @@ export default function ExperimentDetailPage() {
         </Space>
       </Card>
 
-      {user.role === "STUDENT" ? (
+      {isStudent ? (
         <Card title={<Space><CloudUploadOutlined />上传实验提交</Space>} style={{ marginBottom: 16 }}>
           <Form layout="vertical" onSubmitCapture={onSubmit}>
             <Form.Item label="提交文件" required>
               <Input type="file" onChange={(event) => setFile(event.target.files?.[0] ?? null)} required />
             </Form.Item>
             <Form.Item label="备注">
-              <Input.TextArea rows={4} value={note} onChange={(event) => setNote(event.target.value)} placeholder="可填写本次提交说明" />
+              <RichTextEditor
+                value={note}
+                onChange={setNote}
+                placeholder="可填写本次提交说明"
+              />
             </Form.Item>
             <Button type="primary" htmlType="submit" loading={submitting}>
               提交实验
@@ -190,15 +204,15 @@ export default function ExperimentDetailPage() {
                   <Typography.Text type="secondary">
                     提交时间：{new Date(submission.submittedAt).toLocaleString("zh-CN")}
                   </Typography.Text>
-                  {submission.note ? <Typography.Text>备注：{submission.note}</Typography.Text> : null}
-                  {submission.feedback ? <Typography.Text>评语：{submission.feedback}</Typography.Text> : null}
+                  {submission.note ? <RichTextRenderer html={submission.note} className="muted" /> : null}
+                  {submission.feedback ? <RichTextRenderer html={submission.feedback} className="muted" /> : null}
                   {submission.gradedAt ? (
                     <Typography.Text type="secondary">
                       评分时间：{new Date(submission.gradedAt).toLocaleString("zh-CN")}
                     </Typography.Text>
                   ) : null}
 
-                  {user.role === "TEACHER" ? (
+                  {isTeacher ? (
                     <Space wrap>
                       <InputNumber
                         min={0}

@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
-import { Alert, Button, Card, Col, Empty, Row, Space, Spin, Statistic, Typography } from "antd";
+import { Alert, Button, Card, Col, Empty, Row, Space, Spin, Statistic } from "antd";
 import { AppstoreOutlined, BookOutlined, MailOutlined, ReadOutlined } from "@ant-design/icons";
 import { AuthLoadingState } from "@/components/auth-loading-state";
 import { PersonalShell } from "@/components/personal-shell";
@@ -11,6 +11,7 @@ import { coursesApi } from "@/lib/api/courses";
 import { learningApi } from "@/lib/api/learning";
 import type { CourseSummary, CourseHomeworkItem } from "@/lib/api/types";
 import { useAuth } from "@/lib/auth/auth-context";
+import { RichTextRenderer } from "@/components/rich-text-renderer";
 
 export default function DashboardPage() {
   const { user, loading } = useAuth();
@@ -101,7 +102,7 @@ export default function DashboardPage() {
                       </Link>
                     )}
                   >
-                    <Typography.Text type="secondary">{course.description || "暂无描述"}</Typography.Text>
+                    <RichTextRenderer html={course.description} emptyText="暂无描述" className="muted" />
                   </Card>
                 ))}
               </Space>

@@ -42,7 +42,6 @@ export default function HomeworkCenterPage() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const isTeacher = user?.role === "TEACHER";
 
   const loadHomeworks = async () => {
     setBusy(true);
@@ -124,7 +123,8 @@ export default function HomeworkCenterPage() {
                           {item.startAt ? <Typography.Text type="secondary">开始：{new Date(item.startAt).toLocaleString("zh-CN")}</Typography.Text> : null}
                           {item.dueAt ? <Typography.Text type="secondary">截止：{new Date(item.dueAt).toLocaleString("zh-CN")}</Typography.Text> : null}
                           {item.latestScore !== null ? <Tag color="blue">得分 {item.latestScore}</Tag> : null}
-                          {isTeacher ? <Tag>提交 {item.submittedCount}/{item.totalStudentCount}</Tag> : null}
+                          {/* 提交统计：需要检查用户是否是课程所有者 */}
+                          {item.totalStudentCount > 0 ? <Tag>提交 {item.submittedCount}/{item.totalStudentCount}</Tag> : null}
                         </Space>
                       )}
                     />
