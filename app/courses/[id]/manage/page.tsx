@@ -19,7 +19,6 @@ import { useAuth } from "@/lib/auth/auth-context";
 
 const taskTypeOptions: Array<{ label: string; value: LearningTaskType }> = [
   { label: "媒体学习", value: "MEDIA" },
-  { label: "随堂测试", value: "QUIZ" },
 ];
 
 const taskKindOptions: Array<{ label: string; value: LearningTaskKind }> = [
@@ -788,7 +787,7 @@ export default function CourseManagePage() {
                                                       <FileOutlined />
                                                       <span>{task.title}</span>
                                                       <Tag>{task.taskKind === 'HOMEWORK' ? '作业' : '学习任务'}</Tag>
-                                                      <Tag>{task.taskType === 'QUIZ' ? '随堂测试' : '媒体学习'}</Tag>
+                                                      <Tag>媒体学习</Tag>
                                                       {task.maxScore ? <Tag>分值 {task.maxScore}</Tag> : null}
                                                     </Space>
                                                     <Typography.Text type="secondary">{task.description ? <RichTextRenderer html={task.description} className="muted" /> : "暂无任务说明"}</Typography.Text>

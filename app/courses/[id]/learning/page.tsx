@@ -44,7 +44,6 @@ import type {
 
 const taskTypeOptions: Array<{ label: string; value: LearningTaskType }> = [
   { label: "媒体学习", value: "MEDIA" },
-  { label: "随堂测试", value: "QUIZ" },
 ];
 
 const taskKindOptions: Array<{ label: string; value: LearningTaskKind }> = [
@@ -368,8 +367,8 @@ export default function CourseLearningPage() {
         materialType: taskType === "MEDIA" ? materialType : undefined,
         contentText: contentText || undefined,
         mediaUrl: mediaUrl || undefined,
-        questionType: taskType === "QUIZ" ? questionType : undefined,
-        optionsText: taskType === "QUIZ" ? optionsText : undefined,
+        questionType: undefined,
+        optionsText: undefined,
         referenceAnswer: referenceAnswer || undefined,
         maxScore: taskMaxScore ?? undefined,
         startAt: taskStartAt || undefined,
@@ -934,7 +933,7 @@ export default function CourseLearningPage() {
                                     <Space wrap size={6} style={{ flex: 1 }}>
                                       <span className="learning-structure-task-title">{task.title}</span>
                                       <Tag color={task.taskKind === "HOMEWORK" ? "gold" : "default"}>{task.taskKind === "HOMEWORK" ? "作业" : "学习"}</Tag>
-                                      <Tag>{task.taskType === "MEDIA" ? "媒体" : "测验"}</Tag>
+                                      <Tag>媒体</Tag>
                                       <Tag>分值 {task.maxScore}</Tag>
                                     </Space>
                                     <Button size="small" type={selectedTaskId === task.id ? "primary" : "default"} onClick={() => setSelectedTaskId(task.id)}>
@@ -965,7 +964,7 @@ export default function CourseLearningPage() {
               <Space direction="vertical" size={12} style={{ width: "100%" }}>
                 <Space wrap>
                   <Tag color={selectedTask.taskKind === "HOMEWORK" ? "gold" : "default"}>{selectedTask.taskKind === "HOMEWORK" ? "作业" : "学习"}</Tag>
-                  <Tag color="blue">{selectedTask.taskType === "MEDIA" ? "媒体学习" : "随堂测试"}</Tag>
+                  <Tag color="blue">媒体学习</Tag>
                   <Tag>分值 {selectedTask.maxScore}</Tag>
                   {selectedTask.required ? <Tag color="red">必做</Tag> : <Tag>选做</Tag>}
                 </Space>
@@ -1133,7 +1132,7 @@ export default function CourseLearningPage() {
                           <Space direction="vertical" size={4} style={{ width: "100%" }}>
                             <Space wrap>
                               <Typography.Text strong>{item.unitTitle} / {item.pointTitle}</Typography.Text>
-                              <Tag>{item.taskType === "MEDIA" ? "媒体学习" : "随堂测试"}</Tag>
+                              <Tag>媒体学习</Tag>
                               <Tag>分值 {item.maxScore}</Tag>
                             </Space>
                             <Typography.Text>{item.taskTitle}</Typography.Text>
