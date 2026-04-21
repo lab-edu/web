@@ -2,14 +2,29 @@ import type { ApiEnvelope } from "./types";
 
 const DEFAULT_CORE_BASE_URL = "http://localhost:8080";
 
+function inferCoreBaseUrlFromLocation() {
+  if (typeof window === "undefined") {
+    return undefined;
+  }
+
+  const { protocol, hostname } = window.location;
+  if (!hostname) {
+    return undefined;
+  }
+
+  return `${protocol}//${hostname}:8080`;
+}
+
 function normalizeBaseUrl(value: string) {
   return value.endsWith("/") ? value.slice(0, -1) : value;
 }
 
 export function resolveCoreBaseUrl() {
+  const inferredBase = inferCoreBaseUrlFromLocation();
   const configuredBase =
     process.env.NEXT_PUBLIC_CORE_BASE_URL
     ?? process.env.CORE_BASE_URL
+    ?? inferredBase
     ?? DEFAULT_CORE_BASE_URL;
 
   return normalizeBaseUrl(configuredBase);
