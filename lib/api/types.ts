@@ -474,3 +474,13 @@ export type AssignmentGradeRequest = {
   totalScore?: number;
   feedback?: string;
 };
+
+export type AssignmentAiGradeDraftResponse = {
+  totalScore: number;
+  feedback: string | null;
+  itemGrades: Array<{
+    taskItemId: string;
+    score: number;
+    feedback: string | null;
+  }>;
+};

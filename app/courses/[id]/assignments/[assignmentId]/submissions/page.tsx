@@ -6,6 +6,7 @@ import {
   CheckOutlined,
   UserOutlined,
   CalendarOutlined,
+  RobotOutlined,
 } from "@ant-design/icons";
 import {
   Alert,
@@ -65,6 +66,7 @@ export default function AssignmentSubmissionsPage() {
   const [gradingSubmission, setGradingSubmission] = useState<AssignmentSubmissionResponse | null>(null);
   const [gradeModalVisible, setGradeModalVisible] = useState(false);
   const [grading, setGrading] = useState(false);
+  const [aiGrading, setAiGrading] = useState(false);
 
 
   const loadData = useCallback(async () => {
@@ -148,6 +150,31 @@ export default function AssignmentSubmissionsPage() {
       message.error(gradeError instanceof Error ? gradeError.message : "批改失败");
     } finally {
       setGrading(false);
+    }
+  };
+
+  const handleAiGradeDraft = async () => {
+    if (!gradingSubmission || !assignment) return;
+
+    setAiGrading(true);
+    try {
+      const aiDraft = await assignmentsApi.aiGradeDraft(courseId, assignment.id, gradingSubmission.id);
+      const nextValues: GradeFormValues = {
+        feedback: aiDraft.feedback ?? "",
+        totalScore: aiDraft.totalScore,
+      };
+
+      aiDraft.itemGrades.forEach((item) => {
+        nextValues[`score_${item.taskItemId}`] = item.score;
+        nextValues[`feedback_${item.taskItemId}`] = item.feedback ?? "";
+      });
+
+      gradeForm.setFieldsValue(nextValues);
+      message.success("AI 批改建议已填充，可修改后提交");
+    } catch (aiError) {
+      message.error(aiError instanceof Error ? aiError.message : "AI 批改失败");
+    } finally {
+      setAiGrading(false);
     }
   };
 
@@ -436,6 +463,9 @@ export default function AssignmentSubmissionsPage() {
 
             <div style={{ textAlign: "right" }}>
               <Space>
+                <Button icon={<RobotOutlined />} loading={aiGrading} onClick={() => void handleAiGradeDraft()}>
+                  AI 批改建议
+                </Button>
                 <Button onClick={() => setGradeModalVisible(false)}>
                   取消
                 </Button>

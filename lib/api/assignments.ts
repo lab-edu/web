@@ -6,6 +6,7 @@ import type {
   AssignmentSubmissionResponse,
   AssignmentSubmissionRequest,
   AssignmentGradeRequest,
+  AssignmentAiGradeDraftResponse,
   CourseHomeworkListData,
 } from "./types";
 
@@ -58,6 +59,15 @@ export const assignmentsApi = {
       method: "PATCH",
       body: JSON.stringify(payload),
     });
+  },
+
+  aiGradeDraft(courseId: string, assignmentId: string, submissionId: string) {
+    return apiRequest<AssignmentAiGradeDraftResponse>(
+      `/courses/${courseId}/assignments/${assignmentId}/submissions/${submissionId}/ai-grade-draft`,
+      {
+        method: "POST",
+      },
+    );
   },
 
   listMyAssignments() {
