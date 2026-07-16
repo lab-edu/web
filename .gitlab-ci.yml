@@ -2,33 +2,35 @@ stages:
   - build
   - mirror
 
-variables:
-  DOCKER_TLS_CERTDIR: ""
-
 # ── 构建镜像并推送到 GitLab Container Registry ────────
 #
-# dev 分支 → :dev
-# main 分支 → :main + :latest
+# dev 分支 → :dev + :sha-xxx
+# main 分支 → :main + :latest + :sha-xxx
 # v* 标签   → :vX.Y.Z + :latest
 #
 build:
   stage: build
-  image: docker:latest
-  services:
-    - docker:dind
+  image:
+    name: gcr.io/kaniko-project/executor:debug
+    entrypoint: [""]
   before_script:
-    - docker login -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_JOB_TOKEN" "$CI_REGISTRY"
-  script:
-    - docker build -t "$CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG" .
-    - docker push "$CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG"
+    - mkdir -p /kaniko/.docker
     - |
-      docker tag "$CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG" \
-        "$CI_REGISTRY_IMAGE:sha-$CI_COMMIT_SHORT_SHA"
-      docker push "$CI_REGISTRY_IMAGE:sha-$CI_COMMIT_SHORT_SHA"
+      echo "{\"auths\":{\"$CI_REGISTRY\":{\"username\":\"$CI_REGISTRY_USER\",\"password\":\"$CI_JOB_TOKEN\"}}}" \
+        > /kaniko/.docker/config.json
+  script:
+    - |
+      /kaniko/executor \
+        --context "$CI_PROJECT_DIR" \
+        --dockerfile "$CI_PROJECT_DIR/Dockerfile" \
+        --destination "$CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG" \
+        --destination "$CI_REGISTRY_IMAGE:sha-$CI_COMMIT_SHORT_SHA"
     - |
       if [ "$CI_COMMIT_BRANCH" = "main" ] || echo "$CI_COMMIT_TAG" | grep -qE '^v'; then
-        docker tag "$CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG" "$CI_REGISTRY_IMAGE:latest"
-        docker push "$CI_REGISTRY_IMAGE:latest"
+        /kaniko/executor \
+          --context "$CI_PROJECT_DIR" \
+          --dockerfile "$CI_PROJECT_DIR/Dockerfile" \
+          --destination "$CI_REGISTRY_IMAGE:latest"
       fi
   rules:
     - if: $CI_COMMIT_BRANCH == "dev"
@@ -51,11 +53,6 @@ build:
 # 使用前需要在 GitLab → Settings → CI/CD → Variables 中添加：
 #   GITHUB_PAT           = github_pat_...  (fine-grained PAT: Contents R/W)
 #   GITHUB_MIRROR_REPO   = github.com/lab-edu/web.git
-#
-# PAT 创建路径：GitHub → Settings → Developer settings → Fine-grained tokens
-#   Resource owner: lab-edu
-#   Repository:     Only select → web
-#   Permissions:    Contents → Read and Write
 #
 mirror-to-github:
   stage: mirror
