@@ -1,12 +1,38 @@
 stages:
+  - lint
   - build
   - mirror
 
+# ── dev 分支：代码风格检查 ─────────────────────────────
+lint:
+  stage: lint
+  image: node:22-alpine
+  before_script:
+    - npm ci
+  script:
+    - npm run lint
+    - npx tsc --noEmit
+  cache:
+    key: ${CI_COMMIT_REF_SLUG}
+    paths:
+      - node_modules/
+  rules:
+    - if: $CI_COMMIT_BRANCH == "dev"
+      changes:
+        - app/**
+        - lib/**
+        - components/**
+        - public/**
+        - "*.ts"
+        - "*.tsx"
+        - "*.json"
+        - "*.mjs"
+        - .gitlab-ci.yml
+
 # ── 构建镜像并推送到 GitLab Container Registry ────────
 #
-# dev 分支 → :dev + :sha-xxx
 # main 分支 → :main + :latest + :sha-xxx
-# v* 标签   → :vX.Y.Z + :latest
+# v* 标签   → :vX.Y.Z + :latest + :sha-xxx
 #
 build:
   stage: build
@@ -37,27 +63,10 @@ build:
           --destination "$CI_REGISTRY_IMAGE:latest"
       fi
   rules:
-    - if: $CI_COMMIT_BRANCH == "dev"
-      changes:
-        - app/**
-        - public/**
-        - package.json
-        - package-lock.json
-        - next.config.ts
-        - tsconfig.json
-        - postcss.config.mjs
-        - eslint.config.mjs
-        - Dockerfile
-        - .gitlab-ci.yml
     - if: $CI_COMMIT_BRANCH == "main"
     - if: $CI_COMMIT_TAG =~ /^v/
 
 # ── 同步到 GitHub（仅 main 分支与 v* 标签） ───────────
-#
-# 使用前需要在 GitLab → Settings → CI/CD → Variables 中添加：
-#   GITHUB_PAT           = github_pat_...  (fine-grained PAT: Contents R/W)
-#   GITHUB_MIRROR_REPO   = github.com/lab-edu/web.git
-#
 mirror-to-github:
   stage: mirror
   image: alpine:latest
