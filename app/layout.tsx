@@ -1,19 +1,10 @@
 import type { Metadata } from "next";
-import { Noto_Sans_SC, Space_Mono } from "next/font/google";
+import "@fontsource/noto-sans-sc/400.css";
+import "@fontsource/space-mono/400.css";
+import "@fontsource/space-mono/700.css";
 import { AppProviders } from "./providers";
 import "antd/dist/reset.css";
 import "./globals.css";
-
-const notoSansSc = Noto_Sans_SC({
-  variable: "--font-noto-sans-sc",
-  subsets: ["latin"],
-});
-
-const spaceMono = Space_Mono({
-  variable: "--font-space-mono",
-  weight: ["400", "700"],
-  subsets: ["latin"],
-});
 
 export const metadata: Metadata = {
   title: "lab-edu | 教学实验平台",
@@ -28,7 +19,7 @@ export default function RootLayout({
   return (
     <html
       lang="zh-CN"
-      className={`${notoSansSc.variable} ${spaceMono.variable} h-full antialiased`}
+      className="h-full antialiased"
     >
       <body className="min-h-full flex flex-col">
         <AppProviders>{children}</AppProviders>

@@ -12,7 +12,7 @@ export function AppProviders({ children }: { children: React.ReactNode }) {
         token: {
           colorPrimary: "#1967d2",
           borderRadius: 10,
-          fontFamily: 'var(--font-noto-sans-sc), "PingFang SC", "Microsoft YaHei", sans-serif',
+          fontFamily: 'var(--font-sans)',
         },
       }}
     >
