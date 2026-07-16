@@ -15,6 +15,7 @@ COPY lib/ lib/
 COPY public/ public/
 COPY proxy.ts next.config.ts tsconfig.json next-env.d.ts postcss.config.mjs eslint.config.mjs ./
 
+ENV NEXT_TELEMETRY_DISABLED=1
 RUN npm run build
 
 FROM node:22-alpine AS runtime
