@@ -96,7 +96,7 @@ export default function ResourcePreviewPage() {
       >
         {resource ? (
           <div>
-            <Space direction="vertical" size="middle" style={{ width: "100%" }}>
+            <Space orientation="vertical" size="middle" style={{ width: "100%" }}>
               <Typography.Paragraph>
                 <Typography.Text strong>资源名称：</Typography.Text>
                 {resource.name}

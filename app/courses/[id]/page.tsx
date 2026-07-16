@@ -95,7 +95,7 @@ export default function CourseNoticePage() {
                     <List.Item.Meta
                       title={item.title}
                       description={
-                        <Space direction="vertical" size={0}>
+                        <Space orientation="vertical" size={0}>
                           <RichTextRenderer html={item.content} emptyText="暂无内容" className="muted" />
                           <Typography.Text type="secondary">
                             {item.createdBy.displayName || item.createdBy.username} · {new Date(item.createdAt).toLocaleString("zh-CN")}
@@ -114,7 +114,7 @@ export default function CourseNoticePage() {
 
         <Col xs={24} xl={8}>
           <Card title="课程概览">
-            <Space direction="vertical" size={12} style={{ width: "100%" }}>
+            <Space orientation="vertical" size={12} style={{ width: "100%" }}>
               <RichTextRenderer html={course?.description} emptyText="暂无课程简介" className="muted" />
               <Space wrap>
                 <Tag color="blue">实验 {course?.experiments.length ?? 0}</Tag>

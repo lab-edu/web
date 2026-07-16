@@ -93,7 +93,7 @@ export default function HomeworkCenterPage() {
       {busy ? (
         <Spin />
       ) : grouped.length ? (
-        <Space direction="vertical" size={16} style={{ width: "100%" }}>
+        <Space orientation="vertical" size={16} style={{ width: "100%" }}>
           {grouped.map(([courseId, group]) => (
             <Card
               key={courseId}

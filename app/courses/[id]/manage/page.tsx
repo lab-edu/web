@@ -328,7 +328,7 @@ export default function CourseManagePage() {
               key: "announcements",
               label: "通知管理",
               children: (
-                <Space direction="vertical" size={16} style={{ width: "100%" }}>
+                <Space orientation="vertical" size={16} style={{ width: "100%" }}>
                   {creatingAnnouncement ? (
                     <Card title="发布通知">
                       <Form layout="vertical" onSubmitCapture={handleCreateAnnouncement}>
@@ -376,7 +376,7 @@ export default function CourseManagePage() {
               key: "experiments",
               label: "实验管理",
               children: (
-                <Space direction="vertical" size={16} style={{ width: "100%" }}>
+                <Space orientation="vertical" size={16} style={{ width: "100%" }}>
                   {creatingExperiment ? (
                     <Card title="发布实验">
                       <Form layout="vertical" onSubmitCapture={handleCreateExperiment}>
@@ -435,7 +435,7 @@ export default function CourseManagePage() {
               key: "resources",
               label: "资源管理",
               children: (
-                <Space direction="vertical" size={16} style={{ width: "100%" }}>
+                <Space orientation="vertical" size={16} style={{ width: "100%" }}>
                   {creatingResource ? (
                     <Card title="上传资源">
                       <Form layout="vertical" onSubmitCapture={handleCreateResource}>
@@ -505,7 +505,7 @@ export default function CourseManagePage() {
               key: "learning",
               label: "学习管理",
               children: (
-                <Space direction="vertical" size={16} style={{ width: "100%" }}>
+                <Space orientation="vertical" size={16} style={{ width: "100%" }}>
                   <Row gutter={[16, 16]}>
                     <Col xs={24} md={8}><Card><Typography.Text type="secondary">单元</Typography.Text><Typography.Title level={3} style={{ margin: 0 }}>{overview?.unitCount ?? 0}</Typography.Title></Card></Col>
                     <Col xs={24} md={8}><Card><Typography.Text type="secondary">知识点</Typography.Text><Typography.Title level={3} style={{ margin: 0 }}>{overview?.pointCount ?? 0}</Typography.Title></Card></Col>
@@ -670,12 +670,12 @@ export default function CourseManagePage() {
                     </Col>
                     <Col xs={24} md={8}>
                       <Card title="当前选择" size="small">
-                        <Space direction="vertical" size={12} style={{ width: "100%" }}>
+                        <Space orientation="vertical" size={12} style={{ width: "100%" }}>
                           <div>
                             <Typography.Text type="secondary" style={{ fontSize: "0.85em" }}>学习单元</Typography.Text>
                             <div>
                               {selectedUnit ? (
-                                <Space direction="vertical" size={4} style={{ width: "100%" }}>
+                                <Space orientation="vertical" size={4} style={{ width: "100%" }}>
                                   <Typography.Text strong>{selectedUnit.title}</Typography.Text>
                                   <Space wrap>
                                     {selectedUnit.published ? <Tag color="green" style={{ fontSize: '0.85em' }}>已发布</Tag> : <Tag style={{ fontSize: '0.85em' }}>草稿</Tag>}
@@ -694,7 +694,7 @@ export default function CourseManagePage() {
                             <Typography.Text type="secondary" style={{ fontSize: "0.85em" }}>知识点</Typography.Text>
                             <div>
                               {selectedPoint ? (
-                                <Space direction="vertical" size={4} style={{ width: "100%" }}>
+                                <Space orientation="vertical" size={4} style={{ width: "100%" }}>
                                   <Typography.Text strong>{selectedPoint.title}</Typography.Text>
                                   <Space wrap>
                                     <Tag style={{ fontSize: '0.85em' }}>{selectedPoint.estimatedMinutes ? `${selectedPoint.estimatedMinutes}分钟` : "未设时长"}</Tag>
@@ -711,7 +711,7 @@ export default function CourseManagePage() {
                           </div>
                           <div>
                             <Typography.Text type="secondary" style={{ fontSize: "0.85em" }}>快速导航</Typography.Text>
-                            <Space direction="vertical" size={4} style={{ width: "100%" }}>
+                            <Space orientation="vertical" size={4} style={{ width: "100%" }}>
                               <Button size="small" type="link" onClick={() => setCreatingUnit(true)} block style={{ textAlign: "left", paddingLeft: 0 }}>
                                 + 创建新单元
                               </Button>
@@ -730,7 +730,7 @@ export default function CourseManagePage() {
 
                   {learningDetail?.units?.length ? (
                     <Card title="课程结构">
-                      <Space direction="vertical" size={16} style={{ width: "100%" }}>
+                      <Space orientation="vertical" size={16} style={{ width: "100%" }}>
                         <Typography.Text type="secondary">
                           课程内容按单元、知识点、任务三级结构组织。点击单元查看详情。
                         </Typography.Text>
@@ -755,14 +755,14 @@ export default function CourseManagePage() {
                                 </Space>
                               }
                             >
-                              <Space direction="vertical" size={12} style={{ width: "100%", paddingLeft: 16 }}>
+                              <Space orientation="vertical" size={12} style={{ width: "100%", paddingLeft: 16 }}>
                                 <Typography.Text type="secondary">{unit.description ? <RichTextRenderer html={unit.description} className="muted" /> : "暂无单元简介"}</Typography.Text>
                                 {unit.points.length ? (
                                   <>
                                     <Divider>知识点</Divider>
                                     {unit.points.map((point) => (
                                       <Card size="small" key={point.id}>
-                                        <Space direction="vertical" size={8} style={{ width: "100%" }}>
+                                        <Space orientation="vertical" size={8} style={{ width: "100%" }}>
                                           <Space
                                             onClick={() => {
                                               setSelectedUnitId(unit.id);
@@ -782,7 +782,7 @@ export default function CourseManagePage() {
                                               <Divider style={{ marginTop: 8, marginBottom: 8 }}>任务</Divider>
                                               {point.tasks.map((task) => (
                                                 <Card size="small" key={task.id}>
-                                                  <Space direction="vertical" size={4} style={{ width: "100%" }}>
+                                                  <Space orientation="vertical" size={4} style={{ width: "100%" }}>
                                                     <Space>
                                                       <FileOutlined />
                                                       <span>{task.title}</span>

@@ -60,11 +60,11 @@ export default function RegisterPage() {
 
   return (
     <main className="auth-page">
-      <Card className="auth-card" bordered={false} bodyStyle={{ padding: 0 }}>
+      <Card className="auth-card" variant="borderless" styles={{ body: { padding: 0 } }}>
         <Row>
           <Col xs={24} lg={10}>
             <div className="auth-hero">
-              <Space direction="vertical" size={18}>
+              <Space orientation="vertical" size={18}>
                 <Typography.Text style={{ color: "rgba(255,255,255,0.8)" }} className="mono">
                   CREATE ACCOUNT
                 </Typography.Text>

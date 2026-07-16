@@ -11,8 +11,8 @@
 @theme inline {
   --color-background: var(--surface);
   --color-foreground: var(--ink);
-  --font-sans: var(--font-noto-sans-sc);
-  --font-mono: var(--font-space-mono);
+  --font-sans: "Noto Sans SC", "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
+  --font-mono: "Space Mono", Consolas, "Liberation Mono", monospace;
 }
 
 html {
@@ -28,12 +28,12 @@ body {
     radial-gradient(circle at 100% 20%, rgba(20, 179, 161, 0.08), transparent 30%),
     linear-gradient(180deg, #f8faff 0%, #edf2fb 100%);
   color: var(--ink);
-  font-family: var(--font-noto-sans-sc), "PingFang SC", "Microsoft YaHei", sans-serif;
+  font-family: var(--font-sans);
 }
 
 code,
 pre {
-  font-family: var(--font-space-mono), Consolas, "Liberation Mono", monospace;
+  font-family: var(--font-mono);
 }
 
 .page-wrap {
@@ -355,7 +355,7 @@ pre {
 }
 
 .mono {
-  font-family: var(--font-space-mono), monospace;
+  font-family: var(--font-mono);
 }
 
 @media (max-width: 900px) {

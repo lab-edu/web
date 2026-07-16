@@ -155,7 +155,7 @@ export default function CourseAssignmentsPage() {
                       </Space>
                     }
                     description={
-                      <Space direction="vertical" size={0}>
+                      <Space orientation="vertical" size={0}>
                         <RichTextRenderer html={assignment.description} emptyText="暂无描述" className="muted" />
                         <Space>
                           {assignment.startAt && (

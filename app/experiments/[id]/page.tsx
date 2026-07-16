@@ -192,7 +192,7 @@ export default function ExperimentDetailPage() {
             dataSource={submissions}
             renderItem={(submission) => (
               <List.Item key={submission.id}>
-                <Space direction="vertical" size={3} style={{ width: "100%" }}>
+                <Space orientation="vertical" size={3} style={{ width: "100%" }}>
                   <Space wrap>
                     <Typography.Text strong>{submission.fileName}</Typography.Text>
                     {submission.latest ? <Tag color="green">最新提交</Tag> : null}

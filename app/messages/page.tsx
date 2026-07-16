@@ -58,7 +58,7 @@ export default function MessagesPage() {
   return (
     <PersonalShell title="消息" subtitle="系统通知、课程提醒与作业动态将汇总在这里。">
       <Card>
-        <Space direction="vertical" size={12} style={{ width: "100%" }}>
+        <Space orientation="vertical" size={12} style={{ width: "100%" }}>
           <Space>
             <BellOutlined />
             <Typography.Text strong>消息中心</Typography.Text>

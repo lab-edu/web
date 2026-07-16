@@ -84,7 +84,7 @@ export default function CourseExperimentsPage() {
                 <List.Item.Meta
                   title={<Space wrap><span>{experiment.title}</span><Tag color="blue">实验</Tag></Space>}
                   description={
-                    <Space direction="vertical" size={0}>
+                    <Space orientation="vertical" size={0}>
                       <RichTextRenderer html={experiment.description} emptyText="暂无描述" className="muted" />
                       <Typography.Text type="secondary"><CalendarOutlined /> 截止：{experiment.dueAt ? new Date(experiment.dueAt).toLocaleString("zh-CN") : "未设置"}</Typography.Text>
                     </Space>
