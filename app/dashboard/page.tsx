@@ -90,7 +90,7 @@ export default function DashboardPage() {
             ) : courses.length === 0 ? (
               <Empty description="暂无课程" />
             ) : (
-              <Space direction="vertical" style={{ width: "100%" }} size={12}>
+              <Space orientation="vertical" style={{ width: "100%" }} size={12}>
                 {courses.slice(0, 5).map((course) => (
                   <Card
                     key={course.id}
@@ -112,7 +112,7 @@ export default function DashboardPage() {
 
         <Col xs={24} xl={10}>
           <Card title="快捷入口">
-            <Space direction="vertical" style={{ width: "100%" }}>
+            <Space orientation="vertical" style={{ width: "100%" }}>
               <Link href="/courses">
                 <Button block icon={<AppstoreOutlined />}>
                   课程列表

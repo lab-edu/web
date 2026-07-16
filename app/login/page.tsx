@@ -45,11 +45,11 @@ export default function LoginPage() {
 
   return (
     <main className="auth-page">
-      <Card className="auth-card" bordered={false} bodyStyle={{ padding: 0 }}>
+      <Card className="auth-card" variant="borderless" styles={{ body: { padding: 0 } }}>
         <Row>
           <Col xs={24} lg={10}>
             <div className="auth-hero">
-              <Space direction="vertical" size={18}>
+              <Space orientation="vertical" size={18}>
                 <Typography.Text style={{ color: "rgba(255,255,255,0.8)" }} className="mono">
                   LAB EDU PLATFORM
                 </Typography.Text>
@@ -59,7 +59,7 @@ export default function LoginPage() {
                 <Typography.Paragraph style={{ color: "rgba(255,255,255,0.86)", margin: 0 }}>
                   统一管理课程、实验、公告与提交记录，支持教师与学生全流程协作。
                 </Typography.Paragraph>
-                <Space direction="vertical" size={10}>
+                <Space orientation="vertical" size={10}>
                   <Typography.Text style={{ color: "#fff" }}>
                     <BookOutlined /> 课程空间
                   </Typography.Text>
@@ -97,7 +97,7 @@ export default function LoginPage() {
                 </Button>
               </Form>
 
-              <Space style={{ marginTop: 16 }} split={<span>|</span>}>
+              <Space style={{ marginTop: 16 }} separator={<span>|</span>}>
                 <Typography.Text type="secondary">
                   还没有账号？
                   <Link href="/register"> 立即注册</Link>

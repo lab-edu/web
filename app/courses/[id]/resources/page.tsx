@@ -96,7 +96,7 @@ export default function CourseResourcesPage() {
                     </Space>
                   }
                   description={
-                    <Space direction="vertical" size={0}>
+                    <Space orientation="vertical" size={0}>
                       <Typography.Text type="secondary">上传者：{resource.uploadedBy.displayName || resource.uploadedBy.username}</Typography.Text>
                       <Typography.Text type="secondary">上传时间：{new Date(resource.uploadedAt).toLocaleString("zh-CN")}</Typography.Text>
                     </Space>

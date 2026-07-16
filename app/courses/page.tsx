@@ -162,7 +162,7 @@ export default function CoursesPage() {
                   ]}
                 >
                   <RichTextRenderer html={course.description} emptyText="暂无描述" className="muted" />
-                  <Space direction="vertical" size={4}>
+                  <Space orientation="vertical" size={4}>
                     <Typography.Text type="secondary">教师：{course.ownerUsername}</Typography.Text>
                     <Typography.Text className="mono">邀请码：{course.inviteCode}</Typography.Text>
                   </Space>

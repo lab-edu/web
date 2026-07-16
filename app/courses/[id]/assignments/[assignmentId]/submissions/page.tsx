@@ -373,7 +373,7 @@ export default function AssignmentSubmissionsPage() {
                     title={`第 ${index + 1} 题：${item.question}`}
                     style={{ marginBottom: 12 }}
                   >
-                    <Space direction="vertical" style={{ width: "100%" }}>
+                    <Space orientation="vertical" style={{ width: "100%" }}>
                       <Typography.Text strong>学生答案：</Typography.Text>
                       <Typography.Paragraph>
                         {answer?.answer || "未作答"}

@@ -773,7 +773,7 @@ export default function CourseLearningPage() {
           ) : null}
 
           <Card className="learning-structure-card" title={<Space><BookOutlined />课程结构</Space>} loading={busy}>
-            <Space direction="vertical" size={16} style={{ width: "100%" }}>
+            <Space orientation="vertical" size={16} style={{ width: "100%" }}>
               <Typography.Text type="secondary">
                 {managementMode
                   ? "教师可以拖拽标题栏调整顺序，右侧按钮会把当前节点带入创建表单。"
@@ -843,7 +843,7 @@ export default function CourseLearningPage() {
                       </Space>
                     ) : undefined,
                     children: (
-                      <Space direction="vertical" size={16} style={{ width: "100%" }}>
+                      <Space orientation="vertical" size={16} style={{ width: "100%" }}>
                         {unit.description ? <Typography.Text type="secondary">{unit.description}</Typography.Text> : null}
                         {unit.points.length ? sortByOrder(unit.points).map((point, pointIndex) => (
                           <div
@@ -897,7 +897,7 @@ export default function CourseLearningPage() {
                             </Space>
                             {point.summary ? <Typography.Text type="secondary">{point.summary}</Typography.Text> : null}
                             {point.tasks.length ? (
-                              <Space direction="vertical" size={10} style={{ width: "100%", marginTop: 10 }}>
+                              <Space orientation="vertical" size={10} style={{ width: "100%", marginTop: 10 }}>
                                 {sortByOrder(point.tasks).map((task, taskIndex) => (
                                   <div
                                     key={task.id}
@@ -961,7 +961,7 @@ export default function CourseLearningPage() {
         <Col xs={24} xl={9}>
           <Card title="任务详情" style={{ marginBottom: 16 }}>
             {selectedTask ? (
-              <Space direction="vertical" size={12} style={{ width: "100%" }}>
+              <Space orientation="vertical" size={12} style={{ width: "100%" }}>
                 <Space wrap>
                   <Tag color={selectedTask.taskKind === "HOMEWORK" ? "gold" : "default"}>{selectedTask.taskKind === "HOMEWORK" ? "作业" : "学习"}</Tag>
                   <Tag color="blue">媒体学习</Tag>
@@ -1032,7 +1032,7 @@ export default function CourseLearningPage() {
               <Divider />
               <Typography.Text type="secondary">最新提交</Typography.Text>
               {taskBusy ? <Spin /> : latestSubmission ? (
-                <Space direction="vertical" size={4} style={{ width: "100%", marginTop: 8 }}>
+                <Space orientation="vertical" size={4} style={{ width: "100%", marginTop: 8 }}>
                   <Typography.Text>提交时间：{new Date(latestSubmission.submittedAt).toLocaleString("zh-CN")}</Typography.Text>
                   {latestSubmission.answerText ? <RichTextRenderer html={latestSubmission.answerText} emptyText="无" /> : <Typography.Text>答案：{latestSubmission.fileName || "无"}</Typography.Text>}
                   {latestSubmission.score !== null ? <Tag color="blue">评分 {latestSubmission.score}</Tag> : <Tag>待评分</Tag>}
@@ -1053,7 +1053,7 @@ export default function CourseLearningPage() {
                   dataSource={taskSubmissions}
                   renderItem={(submission) => (
                     <List.Item key={submission.id}>
-                      <Space direction="vertical" size={4} style={{ width: "100%" }}>
+                      <Space orientation="vertical" size={4} style={{ width: "100%" }}>
                         <Space wrap>
                           <Typography.Text strong>{submission.submittedBy.displayName || submission.submittedBy.username}</Typography.Text>
                           {submission.latest ? <Tag color="green">最新</Tag> : null}
@@ -1129,7 +1129,7 @@ export default function CourseLearningPage() {
                       dataSource={student.tasks}
                       renderItem={(item) => (
                         <List.Item>
-                          <Space direction="vertical" size={4} style={{ width: "100%" }}>
+                          <Space orientation="vertical" size={4} style={{ width: "100%" }}>
                             <Space wrap>
                               <Typography.Text strong>{item.unitTitle} / {item.pointTitle}</Typography.Text>
                               <Tag>媒体学习</Tag>

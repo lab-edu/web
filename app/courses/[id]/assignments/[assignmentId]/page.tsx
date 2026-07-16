@@ -272,7 +272,7 @@ export default function AssignmentDetailPage() {
       {/* 学生提交状态显示 */}
       {!isTeacher && hasSubmitted && (
         <Card style={{ marginBottom: 16 }} type="inner">
-          <Space direction="vertical" style={{ width: "100%" }}>
+          <Space orientation="vertical" style={{ width: "100%" }}>
             <Typography.Title level={5}>
               <Space>
                 {isGraded ? <CheckCircleOutlined style={{ color: "#52c41a" }} /> : <ClockCircleOutlined />}
@@ -348,7 +348,7 @@ export default function AssignmentDetailPage() {
                   {item.questionType === "SINGLE_CHOICE" ? (
                     <Form.Item name={`answer_${item.id}`}>
                       <Radio.Group disabled={!canSubmit || (hasSubmitted && isGraded)}>
-                        <Space direction="vertical">
+                        <Space orientation="vertical">
                           {item.options.map((option, optIndex) => (
                             <Radio key={optIndex} value={option}>
                               {option}
@@ -360,7 +360,7 @@ export default function AssignmentDetailPage() {
                   ) : item.questionType === "MULTIPLE_CHOICE" ? (
                     <Form.Item name={`answer_${item.id}`}>
                       <Checkbox.Group disabled={!canSubmit || (hasSubmitted && isGraded)}>
-                        <Space direction="vertical">
+                        <Space orientation="vertical">
                           {item.options.map((option, optIndex) => (
                             <Checkbox key={optIndex} value={option}>
                               {option}
